@@ -1,0 +1,6 @@
+https://next.openplanet.dev/Game/CGameManiaApp
+https://next.openplanet.dev/Game/CGameScriptHandlerPlaygroundInterface
+https://next.openplanet.dev/Game/CGameScriptHandlerBrowser
+https://next.openplanet.dev/Game/CGameEditorPluginMap
+https://next.openplanet.dev/Game/CGameManiaplanetPlugin
+https://doc.maniaplanet.com/manialink/getting-started

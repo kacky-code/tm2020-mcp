@@ -312,6 +312,17 @@ dotnet test --no-restore
 
 The OpenPlanet AngelScript plugin cannot be compiled by `dotnet`; verify it by reloading plugins in OpenPlanet and checking `Openplanet.log`.
 
+## Local Reference Docs
+
+Curated Openplanet and ManiaLink notes live in:
+
+```text
+docs/openplanet/
+```
+
+These files are intentionally small, agent-readable summaries with source URLs. They are
+not a full mirror of the Openplanet docs.
+
 ## Notes
 
 - Keep the plugin in the user-local `OpenplanetNext/Plugins` folder. The game-install `Openplanet/Plugins` folder may reject local source plugins with signature errors.
