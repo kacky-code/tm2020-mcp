@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="src/Tm2020Mcp/Tm2020Mcp.csproj" />
+  <Project Path="tests/Tm2020Mcp.Tests/Tm2020Mcp.Tests.csproj" />
+</Solution>
+

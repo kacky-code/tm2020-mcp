@@ -1,0 +1,9 @@
+<frame id="hud.scoretable.ScoreTableWidget.root" pos="-18 16" z-index="4">
+  <frame id="hud.scoretable.ScoreTableWidget.player_row" pos="0 0" z-index="1">
+    <label id="hud.scoretable.ScoreTableWidget.rank" pos="2 2.5" z-index="1" size="10 5" text="1" textfont="GameFontSemiBold" halign="center" valign="center2" textsize="2" />
+    <quad id="hud.scoretable.ScoreTableWidget.flag" pos="12 2.6" z-index="1" size="6 5" image="file://ZoneFlags/Path/World" keepratio="Fit" halign="center" valign="center" />
+    <label id="hud.scoretable.ScoreTableWidget.nick" pos="18 2.5" z-index="1" size="58 5" text="Player" textfont="GameFontSemiBold" halign="left" valign="center2" maxline="1" textsize="2.5" />
+    <label id="hud.scoretable.ScoreTableWidget.score" pos="96 2.5" z-index="1" size="24 5" text="0:40.10" textfont="GameFontSemiBold" halign="center" valign="center2" textsize="2.3" />
+    <label id="hud.scoretable.ScoreTableWidget.fins" pos="123 2.5" z-index="1" size="12 5" text="1" textfont="GameFontSemiBold" halign="center" valign="center2" textsize="2.2" />
+  </frame>
+</frame>
