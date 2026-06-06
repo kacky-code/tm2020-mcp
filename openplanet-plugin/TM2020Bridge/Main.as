@@ -6,9 +6,14 @@
 //   POST /manialink/preview
 //   POST /manialink/clear
 //   GET  /manialink/current
+//   GET  /manialink/events
+//   POST /manialink/events
+//   POST /manialink/events/clear
 
 Net::Socket@ g_server;
 string g_currentManialinkXml = "";
+array<string> g_recentManialinkEvents;
+const uint MaxRecentManialinkEvents = 50;
 
 void Main()
 {
@@ -158,6 +163,31 @@ void HandleClient(Net::Socket@ client)
             return;
         }
     }
+    else if (method == "GET" && path == "/manialink/events")
+    {
+        responseBody = GetRecentManialinkEventsJson();
+        status = 200;
+    }
+    else if (method == "POST" && path == "/manialink/events")
+    {
+        if (body.Length == 0)
+        {
+            responseBody = '{"error":"empty request body"}';
+            status = 400;
+        }
+        else
+        {
+            AddRecentManialinkEvent(body);
+            responseBody = '{"recorded":true,"events":' + g_recentManialinkEvents.Length + '}';
+            status = 200;
+        }
+    }
+    else if (method == "POST" && path == "/manialink/events/clear")
+    {
+        g_recentManialinkEvents.Resize(0);
+        responseBody = '{"events":0}';
+        status = 200;
+    }
     else if (method == "GET" && path == "/interface-designer/selection")
     {
         auto designer = GetInterfaceDesigner();
@@ -281,6 +311,27 @@ CGameEditorManialink@ GetInterfaceDesigner()
         return designer;
 
     return cast<CGameEditorManialink>(GetApp().EditorBase);
+}
+
+void AddRecentManialinkEvent(const string &in body)
+{
+    g_recentManialinkEvents.InsertLast(body);
+    while (g_recentManialinkEvents.Length > MaxRecentManialinkEvents)
+        g_recentManialinkEvents.RemoveAt(0);
+}
+
+string GetRecentManialinkEventsJson()
+{
+    string json = '{"events":[';
+    for (uint i = 0; i < g_recentManialinkEvents.Length; i++)
+    {
+        if (i > 0)
+            json += ',';
+
+        json += '{"index":' + i + ',"body":"' + JsonEscape(g_recentManialinkEvents[i]) + '"}';
+    }
+
+    return json + ']}';
 }
 
 string GetInterfaceDesignerSelectionJson(CGameEditorManialink@ designer)

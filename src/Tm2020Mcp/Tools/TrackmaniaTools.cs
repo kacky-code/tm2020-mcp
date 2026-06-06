@@ -1,6 +1,8 @@
 using System.ComponentModel;
 using ModelContextProtocol.Server;
+using Tm2020Mcp.EmojiChat;
 using Tm2020Mcp.EditorBridge;
+using Tm2020Mcp.Manialinks;
 
 namespace Tm2020Mcp.Tools;
 
@@ -8,6 +10,9 @@ namespace Tm2020Mcp.Tools;
 public sealed class TrackmaniaTools
 {
     private readonly OpenPlanetClient _client;
+    private readonly EmojiChatAnalyzer _emojiChat = new();
+    private readonly ManialinkInspector _manialinks = new();
+    private readonly ManialinkVideoProbeBuilder _videoProbe = new();
 
     public TrackmaniaTools(OpenPlanetClient client)
     {
@@ -87,5 +92,100 @@ public sealed class TrackmaniaTools
             ? $"OpenPlanet: map editor autosave triggered.\n{result.Body}"
             : $"OpenPlanet: autosave failed.\n{result.Body}";
     }
-}
 
+    [McpServerTool(Name = "get_recent_manialink_events"), Description("Return recent ManiaLink event payloads recorded by the OpenPlanet bridge.")]
+    public async Task<string> GetRecentManialinkEvents()
+    {
+        var events = await _client.GetRecentManialinkEventsAsync();
+        if (events is null)
+            return "OpenPlanet bridge not reachable or event endpoint unavailable.";
+
+        if (events.Count == 0)
+            return "No ManiaLink events recorded.";
+
+        return string.Join(
+            "\n",
+            events.Select(e => $"[{e.Index}] {e.Body}"));
+    }
+
+    [McpServerTool(Name = "record_manialink_event"), Description("Record a ManiaLink event payload in the OpenPlanet bridge event buffer. Useful for probe/debug flows.")]
+    public async Task<string> RecordManialinkEvent(
+        [Description("Event payload, usually JSON with control id/action/source fields.")] string body)
+    {
+        if (string.IsNullOrWhiteSpace(body))
+            return "Error: event body is empty.";
+
+        var result = await _client.RecordManialinkEventAsync(body);
+        return result.Success
+            ? $"OpenPlanet: ManiaLink event recorded.\n{result.Body}"
+            : $"OpenPlanet: failed to record ManiaLink event.\n{result.Body}";
+    }
+
+    [McpServerTool(Name = "clear_manialink_events"), Description("Clear the OpenPlanet bridge ManiaLink event buffer.")]
+    public async Task<string> ClearManialinkEvents()
+    {
+        var result = await _client.ClearManialinkEventsAsync();
+        return result.Success
+            ? $"OpenPlanet: ManiaLink event buffer cleared.\n{result.Body}"
+            : $"OpenPlanet: failed to clear ManiaLink event buffer.\n{result.Body}";
+    }
+
+    [McpServerTool(Name = "inspect_manialink_interactions"), Description("Inspect ManiaLink XML for interactive label/quad controls with action, scriptaction, or scriptevents.")]
+    public string InspectManialinkInteractions(
+        [Description("Raw ManiaLink XML or Interface Designer fragment.")] string xml)
+    {
+        return _manialinks.InspectInteractiveControls(xml);
+    }
+
+    [McpServerTool(Name = "analyze_emoji_chat_message"), Description("Analyze a Kacky EmojiChat message for emoji shortcodes, Trackmania format codes, unknown emoji, and ManiaLink-safe text.")]
+    public string AnalyzeEmojiChatMessage(
+        [Description("Raw chat message.")] string message,
+        [Description("Optional comma-separated known emoji names to merge with defaults.")] string? knownEmojiNames = null)
+    {
+        if (string.IsNullOrWhiteSpace(message))
+            return "Error: message is empty.";
+
+        var analysis = _emojiChat.Analyze(message, knownEmojiNames);
+        return $"""
+            Original: {analysis.Original}
+            Plain text: {analysis.PlainText}
+            Emoji tokens: {FormatList(analysis.EmojiTokens)}
+            Unknown emoji: {FormatList(analysis.UnknownEmoji)}
+            Trackmania format codes: {FormatList(analysis.TrackmaniaFormatCodes)}
+            ManiaLink-safe text: {analysis.ManialinkSafeText}
+            """;
+    }
+
+    [McpServerTool(Name = "build_emoji_chat_preview_xml"), Description("Build a small paste-safe ManiaLink fragment to preview one EmojiChat message.")]
+    public string BuildEmojiChatPreviewXml(
+        [Description("Raw chat message.")] string message,
+        [Description("Optional comma-separated known emoji names to merge with defaults.")] string? knownEmojiNames = null)
+    {
+        if (string.IsNullOrWhiteSpace(message))
+            return "Error: message is empty.";
+
+        return _emojiChat.BuildLabelPreviewXml(message, knownEmojiNames);
+    }
+
+    [McpServerTool(Name = "build_manialink_video_probe_xml"), Description("Build a small ManiaLink XML document with a video tag for GPS/video experiments.")]
+    public string BuildManialinkVideoProbeXml(
+        [Description("Video data path or URL, for example file://Media/Videos/gps.webm.")] string data,
+        [Description("Whether to route the video as music/audio.")] bool music = true,
+        [Description("Whether playback starts immediately.")] bool play = true,
+        [Description("Whether the video element is hidden.")] bool hidden = false)
+    {
+        try
+        {
+            return _videoProbe.Build(data, music, play, hidden);
+        }
+        catch (ArgumentException ex)
+        {
+            return $"Error: {ex.Message}";
+        }
+    }
+
+    private static string FormatList(IReadOnlyList<string> values)
+    {
+        return values.Count == 0 ? "(none)" : string.Join(", ", values);
+    }
+}

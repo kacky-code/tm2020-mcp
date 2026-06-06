@@ -68,6 +68,35 @@ public sealed class OpenPlanetClient
         return await PostAsync("/manialink/clear", content: null, cancellationToken);
     }
 
+    public async Task<IReadOnlyList<ManialinkEvent>?> GetRecentManialinkEventsAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var response = await _http.GetAsync($"{_baseUrl}/manialink/events", cancellationToken);
+            if (!response.IsSuccessStatusCode)
+                return null;
+
+            return await response.Content.ReadFromJsonAsync<ManialinkEventsDto>(JsonOptions, cancellationToken) is { } dto
+                ? dto.Events.Select(e => new ManialinkEvent(e.Index, e.Body)).ToArray()
+                : null;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    public async Task<OpenPlanetResult> RecordManialinkEventAsync(string body, CancellationToken cancellationToken = default)
+    {
+        using var content = new StringContent(body, Encoding.UTF8, "application/json");
+        return await PostAsync("/manialink/events", content, cancellationToken);
+    }
+
+    public async Task<OpenPlanetResult> ClearManialinkEventsAsync(CancellationToken cancellationToken = default)
+    {
+        return await PostAsync("/manialink/events/clear", content: null, cancellationToken);
+    }
+
     private async Task<OpenPlanetResult> PostAsync(string path, HttpContent? content, CancellationToken cancellationToken)
     {
         try
@@ -103,5 +132,11 @@ public sealed class OpenPlanetClient
                 ManialinkPreview);
         }
     }
-}
 
+    private sealed record ManialinkEventsDto(
+        [property: JsonPropertyName("events")] IReadOnlyList<ManialinkEventDto> Events);
+
+    private sealed record ManialinkEventDto(
+        [property: JsonPropertyName("index")] int Index,
+        [property: JsonPropertyName("body")] string Body);
+}

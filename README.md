@@ -209,6 +209,16 @@ On Linux, `host.docker.internal` may require host-gateway mapping:
 - `preview_manialink_file(path)` - read an XML file from disk and preview it.
 - `clear_manialink_preview()` - clear the current preview.
 - `autosave_map_editor()` - trigger map-editor autosave.
+- `get_recent_manialink_events()` - show recent ManiaLink event payloads recorded by the bridge.
+- `record_manialink_event(body)` - manually record an event payload in the bridge buffer.
+- `clear_manialink_events()` - clear the bridge event buffer.
+- `inspect_manialink_interactions(xml)` - list interactive `label`/`quad` controls from XML.
+- `analyze_emoji_chat_message(message, knownEmojiNames?)` - parse EmojiChat shortcodes,
+  Trackmania format codes, unknown emoji, and ManiaLink-safe text.
+- `build_emoji_chat_preview_xml(message, knownEmojiNames?)` - generate a small paste-safe
+  XML fragment for one EmojiChat line.
+- `build_manialink_video_probe_xml(data, music?, play?, hidden?)` - generate a small
+  ManiaLink document with a `<video>` tag for GPS/video experiments.
 
 ## Interface Designer Fragments
 
@@ -225,6 +235,35 @@ examples/interface-designer/
 These examples intentionally avoid runtime/script-only attributes and nodes such as
 `action`, `scriptevents`, `class`, `hidden`, `scroll`, `framemodel`, `frameinstance`, and
 `entry`.
+
+## EmojiChat And Event Debugging
+
+The bridge includes a small rolling ManiaLink event buffer:
+
+```bash
+curl -4 -sS --max-time 3 http://127.0.0.1:29100/manialink/events
+curl -4 -sS --max-time 3 \
+  -H 'Content-Type: application/json' \
+  --data-binary '{"id":"gps","action":"open"}' \
+  http://127.0.0.1:29100/manialink/events
+curl -4 -sS --max-time 3 -X POST http://127.0.0.1:29100/manialink/events/clear
+```
+
+This is currently a debug buffer for probes and future ManiaLink scripts. It does not yet
+automatically capture every in-game click.
+
+## Video / GPS Probe
+
+ManiaLink can include a video element, for example:
+
+```xml
+<video data="file://Media/Videos/gps.webm" music="1" play="1" hidden="1" />
+```
+
+Use `build_manialink_video_probe_xml` to generate a small test document around that tag.
+The open question is not whether the tag exists; it is which Trackmania 2020 contexts
+accept it and whether click-to-play behavior can be wired cleanly from a visible
+ManiaLink control.
 
 ## How To Interact From An Agent
 

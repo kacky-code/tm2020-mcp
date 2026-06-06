@@ -69,6 +69,27 @@ public sealed class OpenPlanetClientTests
         Assert.Null(status);
     }
 
+    [Fact]
+    public async Task GetRecentManialinkEventsAsync_ParsesEventBuffer()
+    {
+        using var http = new HttpClient(new StubHandler(_ =>
+            new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("""
+                    {"events":[{"index":0,"body":"{\"id\":\"gps\",\"action\":\"open\"}"}]}
+                    """)
+            }));
+
+        var client = new OpenPlanetClient(http, "http://bridge");
+
+        var events = await client.GetRecentManialinkEventsAsync();
+
+        Assert.NotNull(events);
+        var evt = Assert.Single(events);
+        Assert.Equal(0, evt.Index);
+        Assert.Equal("""{"id":"gps","action":"open"}""", evt.Body);
+    }
+
     private sealed class StubHandler : HttpMessageHandler
     {
         private readonly Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> _responseFactory;

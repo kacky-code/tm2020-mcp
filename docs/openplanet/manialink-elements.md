@@ -27,6 +27,8 @@ Designer.
 - `label`: text element with style/substyle and formatting support.
 - `audio`: audio file element with play/loop controls.
 - `music`: background music element; must be outside a `frame`.
+- `video`: video file element. A useful probe shape is
+  `<video data="file://Media/Videos/gps.webm" music="1" play="1" hidden="1" />`.
 - `include`: include another XML file.
 
 ## Interface Designer Paste-Safe Rules
@@ -44,7 +46,11 @@ Use these rules for generated fragments meant for manual Designer paste:
 
 ## Video/GPS Note
 
-The basic ManiaLink element documentation does not describe a pasteable video element.
-Trackmania exposes video-related managers in script contexts, so GPS/video behavior should
-be explored as a runtime script/API feature rather than as a static Interface Designer
-XML tag.
+ManiaLink has a `video` tag shape worth testing for GPS-style flows. Trackmania also
+exposes video-related managers in script contexts, so there are two separate test tracks:
+
+- static XML playback with `<video ... />`
+- runtime script/API control from a clicked `label` or `quad`
+
+Do not assume Interface Designer, map-editor preview, and live server HUD layers all
+accept the tag the same way. Test each context explicitly.
