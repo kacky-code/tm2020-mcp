@@ -67,8 +67,9 @@ duration: about 1s
 delivery: remote HTTPS
 ```
 
-Generated local VP9 WEBM probes did not work. The useful conversion target is therefore
-VP8 WEBM, not VP9 WEBM.
+Earlier generated local VP9 WEBM probes did not work, but those files were not encoded
+with the Kacky-proven alpha recipe. Current Discord emote conversion uses VP9 with
+`alpha_mode=1`; see the decision section below for the active recipe.
 
 ## Probe Files
 
@@ -103,15 +104,14 @@ For Kontrol production:
 
 - Store the emote allowlist/manifest in code or config.
 - Use 7TV CDN `3x.webp` directly for static emotes.
-- Convert animated 7TV emotes server-side to VP8 WEBM.
+- Convert animated emotes server-side to VP9 WEBM with alpha.
 - Host converted WEBMs on an HTTPS CDN/object store controlled by Kacky.
 - Do not commit large binary emote catalogs to the Kontrol repo.
 
-The current Kacky Discord archive is already converted to VP8 WEBM under
-`var/kacky-discord-emotes/animated-webm/`. Use
-[`scripts/build-emote-cdn.mjs`](../scripts/build-emote-cdn.mjs) to generate static PNG
-fallbacks, write the Kontrol widget manifest, and dry-run the rclone upload to
-`kacky-r2:kacky-cdn/emotes/`:
+The Kacky Discord GIF archive is the source of truth. Use
+[`scripts/build-emote-cdn.mjs`](../scripts/build-emote-cdn.mjs) to re-convert GIFs to
+VP9 alpha WEBM, generate transparent first-frame PNG fallbacks, write the Kontrol widget
+manifest, and dry-run the rclone upload to `kacky-r2:kacky-cdn/emotes/`:
 
 ```bash
 node scripts/build-emote-cdn.mjs
@@ -119,7 +119,9 @@ node scripts/build-emote-cdn.mjs
 
 The script defaults to dry-run. Add `--execute` only when intentionally deploying to the
 R2 bucket behind `cdn.kacky.gg`; rclone reads credentials from its local `kacky-r2`
-remote config.
+remote config. After a real upload, purge the Cloudflare cache for `/emotes/*` because
+older media objects were served as immutable. Current media uploads use
+`Cache-Control: public, max-age=86400`; the manifest uses `public, max-age=300`.
 
 The script writes:
 
@@ -148,18 +150,17 @@ endpoint is no longer part of the flow.
 Suggested conversion target:
 
 ```bash
-ffmpeg -i input \
-  -vf "scale=128:128:force_original_aspect_ratio=decrease,pad=128:128:(ow-iw)/2:(oh-ih)/2:color=black" \
-  -c:v libvpx \
-  -pix_fmt yuv420p \
-  -r 60 \
-  -an \
+ffmpeg -y -i input.gif \
+  -c:v libvpx-vp9 \
+  -crf 10 \
+  -b:v 0 \
+  -pix_fmt yuva420p \
+  -auto-alt-ref 0 \
   output.webm
 ```
 
 Open questions:
 
-- Whether alpha transparency is needed and whether Trackmania accepts VP8 alpha reliably.
 - Whether lower FPS or dimensions work better for many simultaneous chat emotes.
-- Whether converted WEBMs loop long enough in chat; if not, bake repeated frames into the
-  output or refresh `ChangeImageUrl(...)` on updates.
+- Whether converted WEBMs loop long enough in chat; WebM has no real loop flag, so rely
+  on the client looping the animated quad and verify this in-game.

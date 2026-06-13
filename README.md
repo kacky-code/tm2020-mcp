@@ -241,18 +241,20 @@ These examples intentionally avoid runtime/script-only attributes and nodes such
 The EmojiChat media investigation is recorded in
 [`docs/emoji-chat-investigation.md`](docs/emoji-chat-investigation.md). Short version:
 static 7TV WebP works in ManiaLinks, animated 7TV WebP/AVIF/GIF does not, and converted
-remote VP8 WEBM works for animated emotes.
+remote VP9 WEBM with alpha works for animated emotes.
 
-To build the Kacky emote CDN payload from the converted Discord archive:
+To build the Kacky emote CDN payload from the original Discord GIF archive:
 
 ```bash
 node scripts/build-emote-cdn.mjs
 ```
 
-The script reads `var/kacky-discord-emotes/animated-webm/*.webm`, probes dimensions with
-`ffprobe`, writes PNG fallbacks to `var/kacky-discord-emotes/static/`, writes
-`var/kacky-discord-emotes/manifest.json`, and runs a dry-run rclone upload plan to
-`kacky-r2:kacky-cdn/emotes/`. The manifest is hosted on the CDN at:
+The script reads `Emojis_The_Kacky_Discord (1)/*.gif` by default, re-encodes animated
+media to VP9 alpha WEBM, writes transparent first-frame PNG fallbacks to
+`var/kacky-discord-emotes/static/`, writes `var/kacky-discord-emotes/manifest.json`, and
+runs a dry-run rclone upload plan to `kacky-r2:kacky-cdn/emotes/`. If the GIF source
+directory is absent, it skips re-conversion and keeps the existing WEBMs. The manifest is
+hosted on the CDN at:
 
 ```text
 https://cdn.kacky.gg/emotes/manifest.json
@@ -265,6 +267,12 @@ media and manifest with the existing local `kacky-r2` rclone remote, run:
 node scripts/build-emote-cdn.mjs --execute
 ```
 
+After a real upload, purge the Cloudflare cache for `/emotes/*`; old media objects were
+served with `cache-control: public, max-age=31536000, immutable`, so overwriting them will
+not refresh existing edge cache entries. New media uploads use
+`Cache-Control: public, max-age=86400`; the manifest remains short-lived at
+`public, max-age=300`.
+
 The rclone remote and bucket/path are configurable when needed:
 
 ```bash
@@ -273,8 +281,8 @@ node scripts/build-emote-cdn.mjs \
   --rclone-path kacky-cdn/emotes
 ```
 
-`CDN_BASE_URL`, `RCLONE_REMOTE`, and `RCLONE_PATH` are optional environment variables.
-`CDN_BASE_URL` defaults to `https://cdn.kacky.gg`.
+`EMOTE_SOURCE_DIR`, `CDN_BASE_URL`, `RCLONE_REMOTE`, and `RCLONE_PATH` are optional
+environment variables. `CDN_BASE_URL` defaults to `https://cdn.kacky.gg`.
 
 The bridge includes a small rolling ManiaLink event buffer:
 

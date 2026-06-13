@@ -45,6 +45,11 @@ Useful outputs:
 - ManiaLink-safe text
 - small label preview fragments
 
+Media compatibility findings are recorded in
+[`docs/emoji-chat-investigation.md`](docs/emoji-chat-investigation.md). The current
+evidence says static 7TV WebP works directly, animated 7TV WebP/AVIF/GIF does not, and
+animated emotes should be mirrored as remote VP9 WEBM with alpha.
+
 ### ManiaLink Event Inspector
 
 Use the bridge event buffer to store recent event payloads from probes or future
