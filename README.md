@@ -238,6 +238,49 @@ These examples intentionally avoid runtime/script-only attributes and nodes such
 
 ## EmojiChat And Event Debugging
 
+The EmojiChat media investigation is recorded in
+[`docs/emoji-chat-investigation.md`](docs/emoji-chat-investigation.md). Short version:
+static 7TV WebP works in ManiaLinks, animated 7TV WebP/AVIF/GIF does not, and converted
+remote VP8 WEBM works for animated emotes.
+
+To build the Kacky emote CDN payload from the converted Discord archive:
+
+```bash
+node scripts/build-emote-cdn.mjs
+```
+
+The script reads `var/kacky-discord-emotes/animated-webm/*.webm`, probes dimensions with
+`ffprobe`, writes PNG fallbacks to `var/kacky-discord-emotes/static/`, writes
+`var/kacky-discord-emotes/manifest.json`, and prints a dry-run R2 upload plan for
+`https://cdn.kacky.gg/emotes/`. The manifest is hosted on the CDN at:
+
+```text
+https://cdn.kacky.gg/emotes/manifest.json
+```
+
+Configure R2 upload credentials with environment variables from `.env.example`:
+
+```bash
+R2_ACCOUNT_ID=... \
+R2_ACCESS_KEY_ID=... \
+R2_SECRET_ACCESS_KEY=... \
+R2_BUCKET=... \
+node scripts/build-emote-cdn.mjs
+```
+
+The default run never uploads. To deploy the generated media and manifest, run the same
+command with the explicit execute flag:
+
+```bash
+R2_ACCOUNT_ID=... \
+R2_ACCESS_KEY_ID=... \
+R2_SECRET_ACCESS_KEY=... \
+R2_BUCKET=... \
+node scripts/build-emote-cdn.mjs --execute
+```
+
+`CDN_BASE_URL` is optional and defaults to `https://cdn.kacky.gg`.
+
 The bridge includes a small rolling ManiaLink event buffer:
 
 ```bash
