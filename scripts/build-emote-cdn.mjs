@@ -6,6 +6,8 @@ import { basename, extname, join } from "node:path";
 
 const DEFAULT_ROOT = "var/kacky-discord-emotes";
 const DEFAULT_CDN_BASE = "https://cdn.kacky.gg";
+const DEFAULT_RCLONE_REMOTE = "kacky-r2";
+const DEFAULT_RCLONE_PATH = "kacky-cdn/emotes";
 const EMOTE_PREFIX = "emotes";
 const MEDIA_CACHE_CONTROL = "public, max-age=31536000, immutable";
 const MANIFEST_CACHE_CONTROL = "public, max-age=300";
@@ -16,10 +18,12 @@ function usage() {
   node scripts/build-emote-cdn.mjs --execute
 
 Options:
-  --root <dir>       Archive root. Default: ${DEFAULT_ROOT}
-  --cdn-base <url>   Public CDN base. Default: CDN_BASE_URL or ${DEFAULT_CDN_BASE}
-  --execute          Upload to R2. Without this flag the script only prints the upload plan.
-  --self-test        Run script unit checks
+  --root <dir>            Archive root. Default: ${DEFAULT_ROOT}
+  --cdn-base <url>        Public CDN base. Default: CDN_BASE_URL or ${DEFAULT_CDN_BASE}
+  --rclone-remote <name>  rclone remote. Default: RCLONE_REMOTE or ${DEFAULT_RCLONE_REMOTE}
+  --rclone-path <path>    rclone bucket/path. Default: RCLONE_PATH or ${DEFAULT_RCLONE_PATH}
+  --execute               Upload with rclone. Without this flag rclone runs with --dry-run.
+  --self-test             Run script unit checks
 `;
 }
 
@@ -27,6 +31,8 @@ function parseArgs(argv) {
   const args = {
     root: DEFAULT_ROOT,
     cdnBase: trimTrailingSlash(process.env.CDN_BASE_URL || DEFAULT_CDN_BASE),
+    rcloneRemote: process.env.RCLONE_REMOTE || DEFAULT_RCLONE_REMOTE,
+    rclonePath: trimSlashes(process.env.RCLONE_PATH || DEFAULT_RCLONE_PATH),
     execute: false,
     selfTest: false,
   };
@@ -40,6 +46,8 @@ function parseArgs(argv) {
 
     if (arg === "--root") args.root = next();
     else if (arg === "--cdn-base") args.cdnBase = trimTrailingSlash(next());
+    else if (arg === "--rclone-remote") args.rcloneRemote = next();
+    else if (arg === "--rclone-path") args.rclonePath = trimSlashes(next());
     else if (arg === "--execute") args.execute = true;
     else if (arg === "--self-test") args.selfTest = true;
     else if (arg === "--help" || arg === "-h") {
@@ -55,6 +63,10 @@ function parseArgs(argv) {
 
 function trimTrailingSlash(value) {
   return value.replace(/\/+$/, "");
+}
+
+function trimSlashes(value) {
+  return value.replace(/^\/+|\/+$/g, "");
 }
 
 function emoteUrl(cdnBase, name, extension) {
@@ -91,16 +103,9 @@ async function runCommand(command, args) {
   });
 }
 
-async function runAws(args, env) {
+async function runInherited(command, args) {
   return await new Promise((resolve) => {
-    const child = spawn("aws", args, {
-      stdio: "inherit",
-      env: {
-        ...process.env,
-        AWS_ACCESS_KEY_ID: env.R2_ACCESS_KEY_ID,
-        AWS_SECRET_ACCESS_KEY: env.R2_SECRET_ACCESS_KEY,
-      },
-    });
+    const child = spawn(command, args, { stdio: "inherit" });
     child.on("error", (error) => {
       resolve({ ok: false, code: -1, error });
     });
@@ -185,100 +190,100 @@ function formatBytes(bytes) {
   return `${(bytes / 1024 / 1024).toFixed(2)} MiB`;
 }
 
-async function buildUploadItems(root, emotes, manifestPath) {
-  const items = [];
-  for (const emote of emotes) {
-    items.push({
-      path: emote.animatedPath,
-      key: `${EMOTE_PREFIX}/${emote.name}.webm`,
-      contentType: "video/webm",
-      cacheControl: MEDIA_CACHE_CONTROL,
-      size: await fileSize(emote.animatedPath),
-    });
-    if (emote.staticOk) {
-      items.push({
-        path: emote.staticPath,
-        key: `${EMOTE_PREFIX}/${emote.name}.png`,
-        contentType: "image/png",
-        cacheControl: MEDIA_CACHE_CONTROL,
-        size: await fileSize(emote.staticPath),
-      });
-    }
+async function uploadPlan(root, emotes, manifestPath) {
+  const webmCount = emotes.length;
+  const pngCount = emotes.filter((emote) => emote.staticOk).length;
+  const totalSize = await dirExtensionSize(join(root, "animated-webm"), ".webm")
+    + await dirExtensionSize(join(root, "static"), ".png")
+    + await fileSize(manifestPath);
+  return { webmCount, pngCount, manifestCount: 1, objectCount: webmCount + pngCount + 1, totalSize };
+}
+
+async function dirExtensionSize(dir, extension) {
+  const files = await readdir(dir);
+  let total = 0;
+  for (const file of files.filter((item) => extname(item).toLowerCase() === extension)) {
+    total += await fileSize(join(dir, file));
   }
-
-  items.push({
-    path: manifestPath,
-    key: `${EMOTE_PREFIX}/manifest.json`,
-    contentType: "application/json",
-    cacheControl: MANIFEST_CACHE_CONTROL,
-    size: await fileSize(manifestPath),
-  });
-
-  return items;
+  return total;
 }
 
-function r2ConfigFromEnv(env) {
-  return {
-    R2_ACCOUNT_ID: env.R2_ACCOUNT_ID || "",
-    R2_ACCESS_KEY_ID: env.R2_ACCESS_KEY_ID || "",
-    R2_SECRET_ACCESS_KEY: env.R2_SECRET_ACCESS_KEY || "",
-    R2_BUCKET: env.R2_BUCKET || "",
-  };
+function rcloneTarget(remote, path) {
+  return `${remote}:${trimSlashes(path)}/`;
 }
 
-function missingR2Config(config) {
-  return Object.entries(config)
-    .filter(([, value]) => !value)
-    .map(([key]) => key);
-}
-
-function endpointUrl(config) {
-  return `https://${config.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`;
-}
-
-function awsCpArgs(item, config) {
+function rcloneCopyArgs(source, target, execute, cacheControl, contentType, extra = []) {
   return [
-    "s3", "cp",
-    item.path,
-    `s3://${config.R2_BUCKET}/${item.key}`,
-    "--endpoint-url", endpointUrl(config),
-    "--content-type", item.contentType,
-    "--cache-control", item.cacheControl,
+    "copy",
+    source,
+    target,
+    ...(execute ? [] : ["--dry-run"]),
+    "--retries", "1",
+    "--no-traverse",
+    "--header-upload", `Cache-Control: ${cacheControl}`,
+    "--header-upload", `Content-Type: ${contentType}`,
+    ...extra,
   ];
 }
 
-async function uploadOrDryRun(items, execute) {
-  const totalSize = items.reduce((sum, item) => sum + item.size, 0);
+function rcloneCommands(root, manifestPath, args) {
+  const target = rcloneTarget(args.rcloneRemote, args.rclonePath);
+  return [
+    rcloneCopyArgs(join(root, "animated-webm"), target, args.execute, MEDIA_CACHE_CONTROL, "video/webm", ["--include", "*.webm"]),
+    rcloneCopyArgs(join(root, "static"), target, args.execute, MEDIA_CACHE_CONTROL, "image/png", ["--include", "*.png"]),
+    rcloneCopyArgs(root, target, args.execute, MANIFEST_CACHE_CONTROL, "application/json", ["--include", "manifest.json"]),
+  ];
+}
+
+async function hasRcloneRemote(remote) {
+  const version = await runCommand("rclone", ["version"]);
+  if (!version.ok) {
+    return { ok: false, reason: "rclone is not installed or not available on PATH" };
+  }
+
+  const remotes = await runCommand("rclone", ["listremotes"]);
+  if (!remotes.ok) {
+    return { ok: false, reason: `rclone listremotes failed: ${remotes.stderr.trim() || `exit ${remotes.code}`}` };
+  }
+
+  const remoteName = `${remote}:`;
+  const exists = remotes.stdout.split(/\r?\n/).includes(remoteName);
+  if (!exists) return { ok: false, reason: `rclone remote '${remote}' is not configured` };
+  return { ok: true, reason: "" };
+}
+
+async function uploadOrDryRun(root, emotes, manifestPath, args) {
+  const plan = await uploadPlan(root, emotes, manifestPath);
   console.log("");
-  console.log(`${execute ? "UPLOAD" : "DRY-RUN"} R2 plan: ${items.length} object(s), ${formatBytes(totalSize)} total`);
-  for (const item of items) {
-    console.log(`  ${item.path} -> ${item.key} (${item.contentType}, ${formatBytes(item.size)})`);
+  console.log(`${args.execute ? "UPLOAD" : "DRY-RUN"} rclone plan: ${plan.objectCount} object(s), ${formatBytes(plan.totalSize)} total`);
+  console.log(`  ${plan.webmCount} webm -> ${rcloneTarget(args.rcloneRemote, args.rclonePath)}`);
+  console.log(`  ${plan.pngCount} png -> ${rcloneTarget(args.rcloneRemote, args.rclonePath)}`);
+  console.log(`  ${plan.manifestCount} manifest -> ${rcloneTarget(args.rcloneRemote, args.rclonePath)}`);
+
+  const availability = await hasRcloneRemote(args.rcloneRemote);
+  if (!availability.ok) {
+    console.log(`rclone upload skipped: ${availability.reason}.`);
+    return { uploaded: false, skipped: true };
   }
 
-  const config = r2ConfigFromEnv(process.env);
-  const missing = missingR2Config(config);
-  if (missing.length > 0) {
-    console.log(`R2 upload skipped: missing ${missing.join(", ")}.`);
-    return { uploaded: false, missing };
-  }
-
-  const preview = items.map((item) => commandText("aws", awsCpArgs(item, config)));
+  const commands = rcloneCommands(root, manifestPath, args);
   console.log("");
-  console.log("aws-cli commands:");
-  for (const line of preview) console.log(`  ${line}`);
+  console.log("rclone commands:");
+  for (const command of commands) console.log(`  ${commandText("rclone", command)}`);
 
-  if (!execute) {
-    console.log("Dry-run only. Re-run with --execute to upload.");
-    return { uploaded: false, missing: [] };
-  }
-
-  for (const item of items) {
-    const result = await runAws(awsCpArgs(item, config), config);
+  for (const command of commands) {
+    const result = await runInherited("rclone", command);
     if (!result.ok) {
-      throw new Error(`aws s3 cp failed for ${item.key}: ${result.error?.message ?? `exit ${result.code}`}`);
+      if (!args.execute) {
+        console.log(`rclone dry-run failed: ${result.error?.message ?? `exit ${result.code}`}. Upload skipped.`);
+        return { uploaded: false, skipped: true };
+      }
+      throw new Error(`rclone copy failed: ${result.error?.message ?? `exit ${result.code}`}`);
     }
   }
-  return { uploaded: true, missing: [] };
+
+  if (!args.execute) console.log("Dry-run only. Re-run with --execute to upload.");
+  return { uploaded: args.execute, skipped: false };
 }
 
 async function run(args) {
@@ -326,8 +331,7 @@ async function run(args) {
   console.log(`Wrote ${manifestPath} (${entries.length} entries)`);
   console.log(`Wrote ${join(logsDir, "convert-failures.txt")} (${failures.length} failure(s))`);
 
-  const items = await buildUploadItems(args.root, processed, manifestPath);
-  await uploadOrDryRun(items, args.execute);
+  await uploadOrDryRun(args.root, processed, manifestPath, args);
 
   console.log("");
   console.log(`Processed ${processed.length} emote(s): ${entries.length} static fallback(s), ${failures.length} failure(s)`);
@@ -346,12 +350,23 @@ function selfTest() {
     height: 128,
   });
   assert.equal(formatBytes(1024), "1.0 KiB");
-  assert.deepEqual(missingR2Config({
-    R2_ACCOUNT_ID: "account",
-    R2_ACCESS_KEY_ID: "",
-    R2_SECRET_ACCESS_KEY: "secret",
-    R2_BUCKET: "",
-  }), ["R2_ACCESS_KEY_ID", "R2_BUCKET"]);
+  assert.equal(trimSlashes("/kacky-cdn/emotes/"), "kacky-cdn/emotes");
+  assert.equal(rcloneTarget("kacky-r2", "kacky-cdn/emotes"), "kacky-r2:kacky-cdn/emotes/");
+  assert.deepEqual(rcloneCopyArgs("static", "kacky-r2:kacky-cdn/emotes/", false, MEDIA_CACHE_CONTROL, "image/png", ["--include", "*.png"]), [
+    "copy",
+    "static",
+    "kacky-r2:kacky-cdn/emotes/",
+    "--dry-run",
+    "--retries",
+    "1",
+    "--no-traverse",
+    "--header-upload",
+    "Cache-Control: public, max-age=31536000, immutable",
+    "--header-upload",
+    "Content-Type: image/png",
+    "--include",
+    "*.png",
+  ]);
   console.log("Self-test passed");
 }
 

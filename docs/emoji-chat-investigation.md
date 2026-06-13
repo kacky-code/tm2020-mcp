@@ -110,15 +110,16 @@ For Kontrol production:
 The current Kacky Discord archive is already converted to VP8 WEBM under
 `var/kacky-discord-emotes/animated-webm/`. Use
 [`scripts/build-emote-cdn.mjs`](../scripts/build-emote-cdn.mjs) to generate static PNG
-fallbacks, write the Kontrol widget manifest, and dry-run the R2 upload:
+fallbacks, write the Kontrol widget manifest, and dry-run the rclone upload to
+`kacky-r2:kacky-cdn/emotes/`:
 
 ```bash
 node scripts/build-emote-cdn.mjs
 ```
 
-The script defaults to dry-run. Set `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`,
-`R2_SECRET_ACCESS_KEY`, and `R2_BUCKET`, then add `--execute` only when intentionally
-deploying to the R2 bucket behind `cdn.kacky.gg`.
+The script defaults to dry-run. Add `--execute` only when intentionally deploying to the
+R2 bucket behind `cdn.kacky.gg`; rclone reads credentials from its local `kacky-r2`
+remote config.
 
 The script writes:
 
