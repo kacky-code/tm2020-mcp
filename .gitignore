@@ -1,7 +1,11 @@
 bin/
 obj/
 .DS_Store
+.env
+.env.*
+!.env.example
 *.user
 *.suo
 TestResults/
 docs/openplanet/raw/
+var/
