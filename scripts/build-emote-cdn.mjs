@@ -1,17 +1,17 @@
 #!/usr/bin/env node
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
-import { access, mkdir, readdir, stat, writeFile } from "node:fs/promises";
+import { access, mkdir, readdir, rm, stat, writeFile } from "node:fs/promises";
 import { basename, extname, join } from "node:path";
 
 const DEFAULT_ROOT = "var/kacky-discord-emotes";
-const DEFAULT_SOURCE_DIR = "Emojis_The_Kacky_Discord (1)";
+const DEFAULT_SOURCE_DIR = "EmotesZip";
 const DEFAULT_CDN_BASE = "https://cdn.kacky.gg";
 const DEFAULT_RCLONE_REMOTE = "kacky-r2";
 const DEFAULT_RCLONE_PATH = "kacky-cdn/emotes";
 const EMOTE_PREFIX = "emotes";
 const MEDIA_CACHE_CONTROL = "public, max-age=86400";
-const MANIFEST_CACHE_CONTROL = "public, max-age=300";
+const MANIFEST_CACHE_CONTROL = "public, max-age=86400";
 
 function usage() {
   return `Usage:
@@ -20,7 +20,7 @@ function usage() {
 
 Options:
   --root <dir>            Archive root. Default: ${DEFAULT_ROOT}
-  --source-dir <dir>      Source Discord GIF directory. Default: EMOTE_SOURCE_DIR or ${DEFAULT_SOURCE_DIR}
+  --source-dir <dir>      Source emote directory with top-level GIF/PNG files. Default: EMOTE_SOURCE_DIR or ${DEFAULT_SOURCE_DIR}
   --cdn-base <url>        Public CDN base. Default: CDN_BASE_URL or ${DEFAULT_CDN_BASE}
   --rclone-remote <name>  rclone remote. Default: RCLONE_REMOTE or ${DEFAULT_RCLONE_REMOTE}
   --rclone-path <path>    rclone bucket/path. Default: RCLONE_PATH or ${DEFAULT_RCLONE_PATH}
@@ -131,16 +131,23 @@ async function scanWebmFiles(animatedDir) {
     }));
 }
 
-async function scanGifFiles(sourceDir) {
+async function scanSourceFiles(sourceDir) {
   const files = await readdir(sourceDir);
-  return files
-    .filter((file) => extname(file).toLowerCase() === ".gif")
+  const emoteFiles = files
+    .filter((file) => [".gif", ".png"].includes(extname(file).toLowerCase()))
     .sort((a, b) => a.localeCompare(b))
     .map((file) => ({
       name: basename(file, extname(file)),
       path: join(sourceDir, file),
+      extension: extname(file).toLowerCase(),
       file,
     }));
+  const gifs = emoteFiles.filter((file) => file.extension === ".gif");
+  const pngs = emoteFiles.filter((file) => file.extension === ".png");
+  const gifNames = new Set(gifs.map((file) => file.name));
+  const staticCollisions = pngs.filter((file) => gifNames.has(file.name));
+  const staticOnly = pngs.filter((file) => !gifNames.has(file.name));
+  return { gifs, pngs, staticOnly, staticCollisions };
 }
 
 async function pathExists(path) {
@@ -192,17 +199,28 @@ async function generateStaticFallback(inputPath, outputPath) {
     "-y",
     "-i", inputPath,
     "-frames:v", "1",
+    "-pix_fmt", "rgba",
     outputPath,
   ]);
 }
 
-function manifestEntry(name, cdnBase, width, height) {
+async function normalizePng(inputPath, outputPath) {
+  if (inputPath === outputPath) return { ok: true, code: 0, stdout: "", stderr: "" };
+  return await runCommand("ffmpeg", [
+    "-y",
+    "-i", inputPath,
+    "-pix_fmt", "rgba",
+    outputPath,
+  ]);
+}
+
+function manifestEntry(name, cdnBase, width, height, animated = true) {
   return {
     name,
     aliases: [],
-    animated: true,
+    animated,
     staticUrl: emoteUrl(cdnBase, name, "png"),
-    animatedUrl: emoteUrl(cdnBase, name, "webm"),
+    animatedUrl: animated ? emoteUrl(cdnBase, name, "webm") : null,
     width,
     height,
   };
@@ -240,7 +258,7 @@ function formatBytes(bytes) {
 }
 
 async function uploadPlan(root, emotes, manifestPath) {
-  const webmCount = emotes.length;
+  const webmCount = emotes.filter((emote) => emote.animatedOk).length;
   const pngCount = emotes.filter((emote) => emote.staticOk).length;
   const totalSize = await dirExtensionSize(join(root, "animated-webm"), ".webm")
     + await dirExtensionSize(join(root, "static"), ".png")
@@ -255,6 +273,26 @@ async function dirExtensionSize(dir, extension) {
     total += await fileSize(join(dir, file));
   }
   return total;
+}
+
+async function cleanGeneratedFiles(dir, extension) {
+  const files = await readdir(dir);
+  for (const file of files.filter((item) => extname(item).toLowerCase() === extension)) {
+    await rm(join(dir, file));
+  }
+}
+
+function caseInsensitiveCollisionNames(names) {
+  const lowerCounts = new Map();
+  for (const name of names) {
+    const key = `${name}.png`.toLocaleLowerCase("en-US");
+    lowerCounts.set(key, (lowerCounts.get(key) || 0) + 1);
+  }
+  return new Set(names.filter((name) => lowerCounts.get(`${name}.png`.toLocaleLowerCase("en-US")) > 1));
+}
+
+function caseCollisionFileName(name) {
+  return `${Buffer.from(name, "utf8").toString("hex")}.png`;
 }
 
 function rcloneTarget(remote, path) {
@@ -275,11 +313,30 @@ function rcloneCopyArgs(source, target, execute, cacheControl, contentType, extr
   ];
 }
 
+function rcloneCopyToArgs(source, target, execute, cacheControl, contentType) {
+  return [
+    "copyto",
+    source,
+    target,
+    ...(execute ? [] : ["--dry-run"]),
+    "--retries", "1",
+    "--header-upload", `Cache-Control: ${cacheControl}`,
+    "--header-upload", `Content-Type: ${contentType}`,
+  ];
+}
+
 function rcloneCommands(root, manifestPath, args) {
   const target = rcloneTarget(args.rcloneRemote, args.rclonePath);
   return [
     rcloneCopyArgs(join(root, "animated-webm"), target, args.execute, MEDIA_CACHE_CONTROL, "video/webm", ["--include", "*.webm"]),
     rcloneCopyArgs(join(root, "static"), target, args.execute, MEDIA_CACHE_CONTROL, "image/png", ["--include", "*.png"]),
+    ...(args.caseSensitiveStaticUploads || []).map((upload) => rcloneCopyToArgs(
+      upload.source,
+      `${target}${upload.remoteFile}`,
+      args.execute,
+      MEDIA_CACHE_CONTROL,
+      "image/png",
+    )),
     rcloneCopyArgs(root, target, args.execute, MANIFEST_CACHE_CONTROL, "application/json", ["--include", "manifest.json"]),
   ];
 }
@@ -303,10 +360,14 @@ async function hasRcloneRemote(remote) {
 
 async function uploadOrDryRun(root, emotes, manifestPath, args) {
   const plan = await uploadPlan(root, emotes, manifestPath);
+  const caseSensitiveStaticUploads = args.caseSensitiveStaticUploads || [];
   console.log("");
   console.log(`${args.execute ? "UPLOAD" : "DRY-RUN"} rclone plan: ${plan.objectCount} object(s), ${formatBytes(plan.totalSize)} total`);
   console.log(`  ${plan.webmCount} webm -> ${rcloneTarget(args.rcloneRemote, args.rclonePath)}`);
   console.log(`  ${plan.pngCount} png -> ${rcloneTarget(args.rcloneRemote, args.rclonePath)}`);
+  if (caseSensitiveStaticUploads.length > 0) {
+    console.log(`  ${caseSensitiveStaticUploads.length} case-sensitive png copyto correction(s)`);
+  }
   console.log(`  ${plan.manifestCount} manifest -> ${rcloneTarget(args.rcloneRemote, args.rclonePath)}`);
 
   const availability = await hasRcloneRemote(args.rcloneRemote);
@@ -321,6 +382,10 @@ async function uploadOrDryRun(root, emotes, manifestPath, args) {
   for (const command of commands) console.log(`  ${commandText("rclone", command)}`);
 
   for (const command of commands) {
+    if (!args.execute && command[0] === "copyto") {
+      console.log(`case-sensitive copyto dry-run listed only: ${commandText("rclone", command)}`);
+      continue;
+    }
     const result = await runInherited("rclone", command);
     if (!result.ok) {
       if (!args.execute) {
@@ -335,18 +400,34 @@ async function uploadOrDryRun(root, emotes, manifestPath, args) {
   return { uploaded: args.execute, skipped: false };
 }
 
-async function buildFromGifSources(args, animatedDir, staticDir, logsDir) {
-  const gifs = await scanGifFiles(args.sourceDir);
-  if (gifs.length === 0) throw new Error(`No .gif files found in ${args.sourceDir}`);
-  console.log(`Source GIFs: ${args.sourceDir} (${gifs.length} file(s))`);
+async function buildFromSourceFiles(args, animatedDir, staticDir, staticCollisionDir, logsDir) {
+  const { gifs, pngs, staticOnly, staticCollisions } = await scanSourceFiles(args.sourceDir);
+  if (gifs.length === 0 && pngs.length === 0) throw new Error(`No .gif or .png files found in ${args.sourceDir}`);
+  const caseCollisionNames = caseInsensitiveCollisionNames([
+    ...gifs.map((gif) => gif.name),
+    ...staticOnly.map((png) => png.name),
+  ]);
+  console.log(`Source emotes: ${args.sourceDir} (${gifs.length + pngs.length} file(s): ${gifs.length} gif, ${pngs.length} png)`);
+  console.log(`Static PNGs skipped because animated GIF wins: ${staticCollisions.length}`);
+  for (const collision of staticCollisions) {
+    console.log(`skip static collision ${collision.name}: ${collision.file}`);
+  }
+  console.log(`Case-sensitive PNG output corrections: ${caseCollisionNames.size}`);
+  for (const name of caseCollisionNames) {
+    console.log(`stage case-sensitive static ${name}.png`);
+  }
   console.log(`VP9 alpha recipe: ${conversionCommandText()}`);
   const entries = [];
   const processed = [];
   const failures = [];
+  const caseSensitiveStaticUploads = [];
 
   for (const gif of gifs) {
     const animatedPath = join(animatedDir, `${gif.name}.webm`);
     const staticPath = join(staticDir, `${gif.name}.png`);
+    const staticUploadPath = caseCollisionNames.has(gif.name)
+      ? join(staticCollisionDir, caseCollisionFileName(gif.name))
+      : staticPath;
     let dimensions;
 
     try {
@@ -359,8 +440,11 @@ async function buildFromGifSources(args, animatedDir, staticDir, logsDir) {
 
     const animatedResult = await convertGifToVp9Alpha(gif.path, animatedPath);
     const staticResult = await generateStaticFallback(gif.path, staticPath);
+    const staticUploadResult = staticUploadPath === staticPath
+      ? staticResult
+      : await generateStaticFallback(gif.path, staticUploadPath);
     const animatedOk = animatedResult.ok;
-    const staticOk = staticResult.ok;
+    const staticOk = staticResult.ok && staticUploadResult.ok;
 
     if (!animatedOk) {
       const error = animatedResult.stderr.trim() || `ffmpeg webm exited ${animatedResult.code}`;
@@ -369,7 +453,9 @@ async function buildFromGifSources(args, animatedDir, staticDir, logsDir) {
     }
 
     if (!staticOk) {
-      const error = staticResult.stderr.trim() || `ffmpeg png exited ${staticResult.code}`;
+      const error = staticResult.ok
+        ? staticUploadResult.stderr.trim() || `ffmpeg png upload staging exited ${staticUploadResult.code}`
+        : staticResult.stderr.trim() || `ffmpeg png exited ${staticResult.code}`;
       console.log(`failed ${gif.name} png: ${error}`);
       failures.push({ name: gif.name, error: `png: ${error}` });
     }
@@ -384,13 +470,82 @@ async function buildFromGifSources(args, animatedDir, staticDir, logsDir) {
       animatedPath,
       staticPath,
       staticOk,
+      animatedOk,
+      staticUploadPath,
       width: dimensions.width,
       height: dimensions.height,
     });
+    if (staticOk && staticUploadPath !== staticPath) {
+      caseSensitiveStaticUploads.push({
+        source: staticUploadPath,
+        remoteFile: `${gif.name}.png`,
+      });
+    }
+  }
+
+  for (const png of staticOnly) {
+    const staticPath = join(staticDir, `${png.name}.png`);
+    const staticUploadPath = caseCollisionNames.has(png.name)
+      ? join(staticCollisionDir, caseCollisionFileName(png.name))
+      : staticPath;
+    let dimensions;
+
+    try {
+      dimensions = await probeDimensions(png.path);
+    } catch (error) {
+      console.log(`failed ${png.name}: ${error.message}`);
+      failures.push({ name: png.name, error: error.message });
+      continue;
+    }
+
+    const result = await normalizePng(png.path, staticPath);
+    const uploadResult = staticUploadPath === staticPath
+      ? result
+      : await normalizePng(png.path, staticUploadPath);
+    const staticOk = result.ok && uploadResult.ok;
+
+    if (staticOk) {
+      console.log(`ok ${png.name}: ${dimensions.width}x${dimensions.height}`);
+      entries.push(manifestEntry(png.name, args.cdnBase, dimensions.width, dimensions.height, false));
+    } else {
+      const error = result.ok
+        ? uploadResult.stderr.trim() || `png upload staging normalize exited ${uploadResult.code}`
+        : result.stderr.trim() || `png normalize exited ${result.code}`;
+      console.log(`failed ${png.name} png: ${error}`);
+      failures.push({ name: png.name, error: `png: ${error}` });
+    }
+
+    processed.push({
+      name: png.name,
+      staticPath,
+      staticOk,
+      animatedOk: false,
+      staticUploadPath,
+      width: dimensions.width,
+      height: dimensions.height,
+    });
+    if (staticOk && staticUploadPath !== staticPath) {
+      caseSensitiveStaticUploads.push({
+        source: staticUploadPath,
+        remoteFile: `${png.name}.png`,
+      });
+    }
   }
 
   await writeFailures(logsDir, failures);
-  return { entries, processed, failures };
+  return {
+    entries,
+    processed,
+    failures,
+    caseSensitiveStaticUploads,
+    summary: {
+      sourceFiles: gifs.length + pngs.length,
+      animatedSource: gifs.length,
+      staticSource: pngs.length,
+      staticCollisions: staticCollisions.length,
+      staticSkipped: staticCollisions.length,
+    },
+  };
 }
 
 async function buildFromExistingWebms(args, animatedDir, staticDir, logsDir) {
@@ -421,6 +576,7 @@ async function buildFromExistingWebms(args, animatedDir, staticDir, logsDir) {
       animatedPath: file.path,
       staticPath,
       staticOk,
+      animatedOk: true,
       width: dimensions.width,
       height: dimensions.height,
     });
@@ -433,25 +589,40 @@ async function buildFromExistingWebms(args, animatedDir, staticDir, logsDir) {
 async function run(args) {
   const animatedDir = join(args.root, "animated-webm");
   const staticDir = join(args.root, "static");
+  const staticCollisionDir = join(args.root, "static-case-collisions");
   const logsDir = join(args.root, "logs");
   const manifestPath = join(args.root, "manifest.json");
   await mkdir(animatedDir, { recursive: true });
   await mkdir(staticDir, { recursive: true });
+  await mkdir(staticCollisionDir, { recursive: true });
 
   const sourceDirExists = await pathExists(args.sourceDir);
-  const { entries, processed, failures } = sourceDirExists
-    ? await buildFromGifSources(args, animatedDir, staticDir, logsDir)
+  if (sourceDirExists) {
+    await cleanGeneratedFiles(animatedDir, ".webm");
+    await cleanGeneratedFiles(staticDir, ".png");
+    await cleanGeneratedFiles(staticCollisionDir, ".png");
+  }
+  const { entries, processed, failures, summary, caseSensitiveStaticUploads = [] } = sourceDirExists
+    ? await buildFromSourceFiles(args, animatedDir, staticDir, staticCollisionDir, logsDir)
     : await buildFromExistingWebms(args, animatedDir, staticDir, logsDir);
 
   entries.sort((a, b) => a.name.localeCompare(b.name));
   await writeFile(manifestPath, JSON.stringify(entries, null, 2) + "\n");
   console.log(`Wrote ${manifestPath} (${entries.length} entries)`);
   console.log(`Wrote ${join(logsDir, "convert-failures.txt")} (${failures.length} failure(s))`);
+  const animatedEntries = entries.filter((entry) => entry.animated).length;
+  const staticEntries = entries.length - animatedEntries;
+  if (summary) {
+    console.log(`Merged manifest summary: ${entries.length} entries (${animatedEntries} animated, ${staticEntries} static, ${summary.staticSkipped} skipped static collision(s))`);
+  }
 
-  await uploadOrDryRun(args.root, processed, manifestPath, args);
+  await uploadOrDryRun(args.root, processed, manifestPath, {
+    ...args,
+    caseSensitiveStaticUploads,
+  });
 
   console.log("");
-  console.log(`Processed ${processed.length} emote(s): ${entries.length} static fallback(s), ${failures.length} failure(s)`);
+  console.log(`Processed ${processed.length} emote(s): ${animatedEntries} animated, ${staticEntries} static, ${failures.length} failure(s)`);
   console.log(`Media upload Cache-Control: ${MEDIA_CACHE_CONTROL}`);
   console.log("After a real --execute upload, purge Cloudflare cache for /emotes/* so edge nodes drop old immutable objects.");
   console.log("WebM has no real loop flag; verify in-game that the client loops the animated quad.");
@@ -460,7 +631,7 @@ async function run(args) {
 function selfTest() {
   assert.equal(trimTrailingSlash("https://cdn.kacky.gg/"), "https://cdn.kacky.gg");
   assert.equal(emoteUrl("https://cdn.kacky.gg", "peepoRun", "webm"), "https://cdn.kacky.gg/emotes/peepoRun.webm");
-  assert.deepEqual(manifestEntry("MLADY", "https://cdn.kacky.gg", 128, 128), {
+  assert.deepEqual(manifestEntry("MLADY", "https://cdn.kacky.gg", 128, 128, true), {
     name: "MLADY",
     aliases: [],
     animated: true,
@@ -469,10 +640,21 @@ function selfTest() {
     width: 128,
     height: 128,
   });
+  assert.deepEqual(manifestEntry("h", "https://cdn.kacky.gg", 64, 64, false), {
+    name: "h",
+    aliases: [],
+    animated: false,
+    staticUrl: "https://cdn.kacky.gg/emotes/h.png",
+    animatedUrl: null,
+    width: 64,
+    height: 64,
+  });
   assert.equal(formatBytes(1024), "1.0 KiB");
   assert.equal(trimSlashes("/kacky-cdn/emotes/"), "kacky-cdn/emotes");
   assert.equal(rcloneTarget("kacky-r2", "kacky-cdn/emotes"), "kacky-r2:kacky-cdn/emotes/");
   assert.equal(conversionCommandText(), "ffmpeg -y -i '<source.gif>' -c:v libvpx-vp9 -crf 10 -b:v 0 -pix_fmt yuva420p -auto-alt-ref 0 '<name>.webm'");
+  assert.deepEqual([...caseInsensitiveCollisionNames(["huh", "HUH", "ok"])].sort(), ["HUH", "huh"]);
+  assert.equal(caseCollisionFileName("HUH"), "485548.png");
   assert.deepEqual(rcloneCopyArgs("static", "kacky-r2:kacky-cdn/emotes/", false, MEDIA_CACHE_CONTROL, "image/png", ["--include", "*.png"]), [
     "copy",
     "static",

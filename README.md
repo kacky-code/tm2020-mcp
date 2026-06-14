@@ -243,18 +243,25 @@ The EmojiChat media investigation is recorded in
 static 7TV WebP works in ManiaLinks, animated 7TV WebP/AVIF/GIF does not, and converted
 remote VP9 WEBM with alpha works for animated emotes.
 
-To build the Kacky emote CDN payload from the original Discord GIF archive:
+To build the Kacky emote CDN payload from the full EmotesZip library:
 
 ```bash
 node scripts/build-emote-cdn.mjs
 ```
 
-The script reads `Emojis_The_Kacky_Discord (1)/*.gif` by default, re-encodes animated
-media to VP9 alpha WEBM, writes transparent first-frame PNG fallbacks to
-`var/kacky-discord-emotes/static/`, writes `var/kacky-discord-emotes/manifest.json`, and
-runs a dry-run rclone upload plan to `kacky-r2:kacky-cdn/emotes/`. If the GIF source
-directory is absent, it skips re-conversion and keeps the existing WEBMs. The manifest is
-hosted on the CDN at:
+The script reads top-level `.gif` and `.png` files from `EmotesZip/` by default,
+re-encodes animated GIFs to VP9 alpha WEBM, writes transparent first-frame PNG fallbacks
+to `var/kacky-discord-emotes/static/`, normalizes static PNG emotes into the same static
+directory, writes `var/kacky-discord-emotes/manifest.json`, and runs a dry-run rclone
+upload plan to `kacky-r2:kacky-cdn/emotes/`. If a `.gif` and `.png` share the same
+basename, the animated GIF wins and the standalone static PNG is skipped. If the source
+directory is absent, the script skips re-conversion and keeps the existing WEBMs. The
+manifest is hosted on the CDN at:
+
+On case-insensitive local filesystems, case-only PNG output pairs such as `HUH`/`huh`
+cannot both exist in the same `static/` directory. The script stages those exact-case
+objects under `var/kacky-discord-emotes/static-case-collisions/` and emits targeted
+`rclone copyto` commands so the case-sensitive CDN keys are still uploaded.
 
 ```text
 https://cdn.kacky.gg/emotes/manifest.json
@@ -269,9 +276,8 @@ node scripts/build-emote-cdn.mjs --execute
 
 After a real upload, purge the Cloudflare cache for `/emotes/*`; old media objects were
 served with `cache-control: public, max-age=31536000, immutable`, so overwriting them will
-not refresh existing edge cache entries. New media uploads use
-`Cache-Control: public, max-age=86400`; the manifest remains short-lived at
-`public, max-age=300`.
+not refresh existing edge cache entries. Media and manifest uploads use
+`Cache-Control: public, max-age=86400`.
 
 The rclone remote and bucket/path are configurable when needed:
 
