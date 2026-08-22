@@ -1,0 +1,32 @@
+<manialink version="3" name="local-image-path-matrix">
+  <frame id="probe.root" pos="-105 65" z-index="25">
+    <quad id="probe.bg" pos="0 0" z-index="0" size="210 82" bgcolor="111b" />
+    <label id="probe.title" pos="4 -4" z-index="1" size="200 5" text="Local image path matrix" textsize="1.5" textfont="GameFontSemiBold" />
+
+    <frame id="probe.relative-file.row" pos="4 -16" z-index="1">
+      <label pos="0 0" size="98 5" text="file://Media/Images" textsize="1" textfont="GameFontRegular" />
+      <quad pos="104 1" z-index="1" size="10 10" bgcolor="a33c" />
+      <quad pos="104 1" z-index="2" size="10 10" image="file://Media/Images/tm2020-mcp-probes/path-check.png" keepratio="Fit" />
+    </frame>
+
+    <frame id="probe.absolute-file-3.row" pos="4 -30" z-index="1">
+      <label pos="0 0" size="98 5" text="file:///Users/..." textsize="1" textfont="GameFontRegular" />
+      <quad pos="104 1" z-index="1" size="10 10" bgcolor="3a3c" />
+      <quad pos="104 1" z-index="2" size="10 10" image="file:///Users/dkThoLue/Documents/Trackmania/Media/Images/tm2020-mcp-probes/path-check.png" keepratio="Fit" />
+    </frame>
+
+    <frame id="probe.absolute-file-2.row" pos="4 -44" z-index="1">
+      <label pos="0 0" size="98 5" text="file://Users/..." textsize="1" textfont="GameFontRegular" />
+      <quad pos="104 1" z-index="1" size="10 10" bgcolor="36ac" />
+      <quad pos="104 1" z-index="2" size="10 10" image="file://Users/dkThoLue/Documents/Trackmania/Media/Images/tm2020-mcp-probes/path-check.png" keepratio="Fit" />
+    </frame>
+
+    <frame id="probe.asset.row" pos="4 -58" z-index="1">
+      <label pos="0 0" size="98 5" text="Media/Images raw" textsize="1" textfont="GameFontRegular" />
+      <quad pos="104 1" z-index="1" size="10 10" bgcolor="aa3c" />
+      <quad pos="104 1" z-index="2" size="10 10" image="Media/Images/tm2020-mcp-probes/path-check.png" keepratio="Fit" />
+    </frame>
+
+    <label id="probe.footer" pos="4 -76" z-index="1" size="200 5" text="If all color boxes remain visible, local file paths are blocked in this ManiaLink context." textsize="1" textfont="GameFontRegular" />
+  </frame>
+</manialink>

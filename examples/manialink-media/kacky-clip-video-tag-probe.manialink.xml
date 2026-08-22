@@ -1,0 +1,15 @@
+<manialink version="3" name="kacky-clip-video-tag-probe">
+  <frame id="probe.root" pos="-105 65" z-index="46">
+    <quad id="probe.bg" pos="0 0" z-index="0" size="210 52" bgcolor="111b" />
+    <label id="probe.title" pos="4 -4" z-index="1" size="200 5" text="Kacky clip video tag probe: uk3zjp" textsize="1.5" textfont="GameFontSemiBold" />
+    <label id="probe.url1" pos="4 -14" z-index="1" size="200 5" text="candidate: videodelivery HLS manifest" textsize="1" textfont="GameFontRegular" />
+    <label id="probe.url2" pos="4 -21" z-index="1" size="200 5" text="expected: may fail; ManiaLink video likely needs direct file/GPS-style media" textsize="1" textfont="GameFontRegular" />
+    <label id="probe.url3" pos="4 -37" z-index="1" size="200 5" text="If nothing plays, thumbnail quads are still the low-risk in-game path." textsize="1" textfont="GameFontRegular" />
+  </frame>
+
+  <video
+    data="https://videodelivery.net/f440c3b45c6593ea6cae3aa7a0a5c18c/manifest/video.m3u8"
+    music="0"
+    play="1"
+    hidden="0" />
+</manialink>

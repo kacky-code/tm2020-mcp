@@ -1,0 +1,20 @@
+<manialink version="3" name="dashmap-webm-static-probe">
+  <frame id="probe.root" pos="-105 65" z-index="36">
+    <quad id="probe.bg" pos="0 0" z-index="0" size="210 52" bgcolor="111b" />
+    <label id="probe.title" pos="4 -4" z-index="1" size="200 5" text="Dashmap WEBM static image probe" textsize="1.5" textfont="GameFontSemiBold" />
+
+    <frame id="probe.catbonk.row" pos="4 -16" z-index="1">
+      <label pos="0 0" size="86 5" text="catBonk VP8 webm" textsize="1" textfont="GameFontRegular" />
+      <quad pos="92 1" z-index="1" size="12 12" bgcolor="a33c" />
+      <quad pos="92 1" z-index="2" size="12 12" image="https://download.dashmap.live/tmsigns/Cats-catBonk1x1.webm" keepratio="Fit" />
+    </frame>
+
+    <frame id="probe.glorp.row" pos="4 -31" z-index="1">
+      <label pos="0 0" size="86 5" text="glorpRave VP8 webm" textsize="1" textfont="GameFontRegular" />
+      <quad pos="92 1" z-index="1" size="12 12" bgcolor="3a3c" />
+      <quad pos="92 1" z-index="2" size="12 12" image="https://download.dashmap.live/tmsigns/Cats-glorpRave1x1.webm" keepratio="Fit" />
+    </frame>
+
+    <label id="probe.footer" pos="4 -47" z-index="1" size="200 5" text="If static fails but ChangeImageUrl works, old EmojiChat must use runtime URL changes." textsize="1" textfont="GameFontRegular" />
+  </frame>
+</manialink>

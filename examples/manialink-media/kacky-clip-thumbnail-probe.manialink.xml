@@ -1,0 +1,39 @@
+<manialink version="3" name="kacky-clip-thumbnail-probe">
+  <frame id="probe.root" pos="-105 65" z-index="45">
+    <quad id="probe.bg" pos="0 0" z-index="0" size="210 72" bgcolor="111b" />
+    <label id="probe.title" pos="4 -4" z-index="1" size="200 5" text="Kacky clip thumbnail probe: uk3zjp" textsize="1.5" textfont="GameFontSemiBold" />
+
+    <frame id="probe.static.row" pos="4 -16" z-index="1">
+      <label pos="0 0" size="82 5" text="static image attr" textsize="1" textfont="GameFontRegular" />
+      <quad pos="88 1" z-index="1" size="42 24" bgcolor="a33c" />
+      <quad
+        id="probe.static.thumbnail"
+        pos="88 1"
+        z-index="2"
+        size="42 24"
+        image="https://videodelivery.net/f440c3b45c6593ea6cae3aa7a0a5c18c/thumbnails/thumbnail.jpg?time=1s&amp;height=720&amp;fit=clip"
+        keepratio="Fit" />
+    </frame>
+
+    <frame id="probe.change.row" pos="4 -45" z-index="1">
+      <label pos="0 0" size="82 5" text="ChangeImageUrl" textsize="1" textfont="GameFontRegular" />
+      <quad id="probe.change.backing" pos="88 1" z-index="1" size="42 24" bgcolor="3a3c" />
+      <quad id="probe.change.thumbnail" pos="88 1" z-index="2" size="42 24" keepratio="Fit" />
+    </frame>
+
+    <label id="probe.footer" pos="4 -67" z-index="1" size="200 5" text="If boxes disappear, Stream thumbnail URLs render in ManiaLink quads." textsize="1" textfont="GameFontRegular" />
+  </frame>
+
+  <script>
+  <!--
+  main() {
+    declare CMlQuad Thumbnail <=> (Page.GetFirstChild("probe.change.thumbnail") as CMlQuad);
+    Thumbnail.ChangeImageUrl("https://videodelivery.net/f440c3b45c6593ea6cae3aa7a0a5c18c/thumbnails/thumbnail.jpg?time=1s&height=720&fit=clip");
+
+    while (True) {
+      yield;
+    }
+  }
+  -->
+  </script>
+</manialink>

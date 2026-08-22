@@ -1,0 +1,32 @@
+<manialink version="3" name="7tv-animated-static-probe">
+  <frame id="probe.root" pos="-105 65" z-index="32">
+    <quad id="probe.bg" pos="0 0" z-index="0" size="210 82" bgcolor="111b" />
+    <label id="probe.title" pos="4 -4" z-index="1" size="200 5" text="7TV animated static probe: catJAM" textsize="1.5" textfont="GameFontSemiBold" />
+
+    <frame id="probe.webp2.row" pos="4 -16" z-index="1">
+      <label pos="0 0" size="78 5" text="catJAM 2x.webp" textsize="1" textfont="GameFontRegular" />
+      <quad pos="92 1" z-index="1" size="12 12" bgcolor="a33c" />
+      <quad pos="92 1" z-index="2" size="12 12" image="https://cdn.7tv.app/emote/01F6MQ33FG000FFJ97ZB8MWV52/2x.webp" keepratio="Fit" />
+    </frame>
+
+    <frame id="probe.webp3.row" pos="4 -31" z-index="1">
+      <label pos="0 0" size="78 5" text="catJAM 3x.webp" textsize="1" textfont="GameFontRegular" />
+      <quad pos="92 1" z-index="1" size="12 12" bgcolor="3a3c" />
+      <quad pos="92 1" z-index="2" size="12 12" image="https://cdn.7tv.app/emote/01F6MQ33FG000FFJ97ZB8MWV52/3x.webp" keepratio="Fit" />
+    </frame>
+
+    <frame id="probe.webp4.row" pos="4 -46" z-index="1">
+      <label pos="0 0" size="78 5" text="catJAM 4x.webp" textsize="1" textfont="GameFontRegular" />
+      <quad pos="92 1" z-index="1" size="12 12" bgcolor="36ac" />
+      <quad pos="92 1" z-index="2" size="12 12" image="https://cdn.7tv.app/emote/01F6MQ33FG000FFJ97ZB8MWV52/4x.webp" keepratio="Fit" />
+    </frame>
+
+    <frame id="probe.gif.row" pos="4 -61" z-index="1">
+      <label pos="0 0" size="78 5" text="catJAM 3x.gif" textsize="1" textfont="GameFontRegular" />
+      <quad pos="92 1" z-index="1" size="12 12" bgcolor="aa3c" />
+      <quad pos="92 1" z-index="2" size="12 12" image="https://cdn.7tv.app/emote/01F6MQ33FG000FFJ97ZB8MWV52/3x.gif" keepratio="Fit" />
+    </frame>
+
+    <label id="probe.footer" pos="4 -77" z-index="1" size="200 5" text="Watch for motion, not just image load. Colored box means format did not load." textsize="1" textfont="GameFontRegular" />
+  </frame>
+</manialink>

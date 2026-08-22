@@ -1,0 +1,26 @@
+<manialink version="3" name="7tv-cdn-static-probe">
+  <frame id="probe.root" pos="-105 65" z-index="30">
+    <quad id="probe.bg" pos="0 0" z-index="0" size="210 66" bgcolor="111b" />
+    <label id="probe.title" pos="4 -4" z-index="1" size="200 5" text="7TV CDN static image probe" textsize="1.5" textfont="GameFontSemiBold" />
+
+    <frame id="probe.webp.row" pos="4 -16" z-index="1">
+      <label pos="0 0" size="78 5" text="7TV /3x.webp" textsize="1" textfont="GameFontRegular" />
+      <quad pos="84 1" z-index="1" size="12 12" bgcolor="a33c" />
+      <quad pos="84 1" z-index="2" size="12 12" image="https://cdn.7tv.app/emote/63071bb9464de28875c52531/3x.webp" keepratio="Fit" />
+    </frame>
+
+    <frame id="probe.webp4.row" pos="4 -31" z-index="1">
+      <label pos="0 0" size="78 5" text="7TV /4x.webp" textsize="1" textfont="GameFontRegular" />
+      <quad pos="84 1" z-index="1" size="12 12" bgcolor="3a3c" />
+      <quad pos="84 1" z-index="2" size="12 12" image="https://cdn.7tv.app/emote/63071bb9464de28875c52531/4x.webp" keepratio="Fit" />
+    </frame>
+
+    <frame id="probe.avif.row" pos="4 -46" z-index="1">
+      <label pos="0 0" size="78 5" text="7TV /4x.avif" textsize="1" textfont="GameFontRegular" />
+      <quad pos="84 1" z-index="1" size="12 12" bgcolor="36ac" />
+      <quad pos="84 1" z-index="2" size="12 12" image="https://cdn.7tv.app/emote/01F5VW2TKR0003RCV2Z6JBHCST/4x.avif" keepratio="Fit" />
+    </frame>
+
+    <label id="probe.footer" pos="4 -61" z-index="1" size="200 5" text="If boxes remain, static quad cannot use 7TV native CDN formats." textsize="1" textfont="GameFontRegular" />
+  </frame>
+</manialink>

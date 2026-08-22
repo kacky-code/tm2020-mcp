@@ -1,0 +1,36 @@
+<manialink version="3" name="dashmap-webm-changeimage-probe">
+  <frame id="probe.root" pos="-105 65" z-index="35">
+    <quad id="probe.bg" pos="0 0" z-index="0" size="210 52" bgcolor="111b" />
+    <label id="probe.title" pos="4 -4" z-index="1" size="200 5" text="Dashmap WEBM ChangeImageUrl probe" textsize="1.5" textfont="GameFontSemiBold" />
+
+    <frame id="probe.catbonk.row" pos="4 -16" z-index="1">
+      <label pos="0 0" size="86 5" text="catBonk VP8 webm" textsize="1" textfont="GameFontRegular" />
+      <quad id="probe.catbonk.backing" pos="92 1" z-index="1" size="12 12" bgcolor="a33c" />
+      <quad id="probe.catbonk.quad" pos="92 1" z-index="2" size="12 12" keepratio="Fit" />
+    </frame>
+
+    <frame id="probe.glorp.row" pos="4 -31" z-index="1">
+      <label pos="0 0" size="86 5" text="glorpRave VP8 webm" textsize="1" textfont="GameFontRegular" />
+      <quad id="probe.glorp.backing" pos="92 1" z-index="1" size="12 12" bgcolor="3a3c" />
+      <quad id="probe.glorp.quad" pos="92 1" z-index="2" size="12 12" keepratio="Fit" />
+    </frame>
+
+    <label id="probe.footer" pos="4 -47" z-index="1" size="200 5" text="Known TM cached sign WEBMs: remote HTTPS, VP8/yuv420p/128x128/60fps." textsize="1" textfont="GameFontRegular" />
+  </frame>
+
+  <script>
+  <!--
+  main() {
+    declare CMlQuad CatBonk <=> (Page.GetFirstChild("probe.catbonk.quad") as CMlQuad);
+    declare CMlQuad Glorp <=> (Page.GetFirstChild("probe.glorp.quad") as CMlQuad);
+
+    CatBonk.ChangeImageUrl("https://download.dashmap.live/tmsigns/Cats-catBonk1x1.webm");
+    Glorp.ChangeImageUrl("https://download.dashmap.live/tmsigns/Cats-glorpRave1x1.webm");
+
+    while (True) {
+      yield;
+    }
+  }
+  -->
+  </script>
+</manialink>

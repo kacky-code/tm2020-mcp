@@ -1,0 +1,32 @@
+<manialink version="3" name="7tv-catjam-format-matrix">
+  <frame id="probe.root" pos="-105 65" z-index="34">
+    <quad id="probe.bg" pos="0 0" z-index="0" size="210 82" bgcolor="111b" />
+    <label id="probe.title" pos="4 -4" z-index="1" size="200 5" text="7TV catJAM format matrix" textsize="1.5" textfont="GameFontSemiBold" />
+
+    <frame id="probe.webp.row" pos="4 -16" z-index="1">
+      <label pos="0 0" size="86 5" text="3x.webp static" textsize="1" textfont="GameFontRegular" />
+      <quad pos="92 1" z-index="1" size="12 12" bgcolor="a33c" />
+      <quad pos="92 1" z-index="2" size="12 12" image="https://cdn.7tv.app/emote/01F6MQ33FG000FFJ97ZB8MWV52/3x.webp" keepratio="Fit" />
+    </frame>
+
+    <frame id="probe.png.row" pos="4 -31" z-index="1">
+      <label pos="0 0" size="86 5" text="3x.png static" textsize="1" textfont="GameFontRegular" />
+      <quad pos="92 1" z-index="1" size="12 12" bgcolor="3a3c" />
+      <quad pos="92 1" z-index="2" size="12 12" image="https://cdn.7tv.app/emote/01F6MQ33FG000FFJ97ZB8MWV52/3x.png" keepratio="Fit" />
+    </frame>
+
+    <frame id="probe.gif.row" pos="4 -46" z-index="1">
+      <label pos="0 0" size="86 5" text="3x.gif static" textsize="1" textfont="GameFontRegular" />
+      <quad pos="92 1" z-index="1" size="12 12" bgcolor="36ac" />
+      <quad pos="92 1" z-index="2" size="12 12" image="https://cdn.7tv.app/emote/01F6MQ33FG000FFJ97ZB8MWV52/3x.gif" keepratio="Fit" />
+    </frame>
+
+    <frame id="probe.avif.row" pos="4 -61" z-index="1">
+      <label pos="0 0" size="86 5" text="3x.avif static" textsize="1" textfont="GameFontRegular" />
+      <quad pos="92 1" z-index="1" size="12 12" bgcolor="aa3c" />
+      <quad pos="92 1" z-index="2" size="12 12" image="https://cdn.7tv.app/emote/01F6MQ33FG000FFJ97ZB8MWV52/3x.avif" keepratio="Fit" />
+    </frame>
+
+    <label id="probe.footer" pos="4 -77" z-index="1" size="200 5" text="If PNG loads but WebP fails, TM rejects animated WebP payloads." textsize="1" textfont="GameFontRegular" />
+  </frame>
+</manialink>

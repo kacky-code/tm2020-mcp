@@ -1,0 +1,20 @@
+<frame id="probe.root" pos="-110 65" z-index="10">
+  <quad id="probe.bg" pos="0 0" z-index="0" size="220 52" bgcolor="111b" />
+  <label id="probe.title" pos="4 -4" z-index="1" size="210 5" text="7TV ManiaLink media probe" textsize="1.5" textfont="GameFontSemiBold" />
+
+  <frame id="probe.webp.row" pos="4 -14" z-index="1">
+    <label id="probe.webp.label" pos="0 0" size="48 5" text="WEBP quad" textsize="1.1" textfont="GameFontRegular" />
+    <quad id="probe.webp.quad" pos="54 1" size="10 10" image="https://cdn.7tv.app/emote/63071bb9464de28875c52531/3x.webp" keepratio="Fit" />
+    <label id="probe.webp.url" pos="68 0" size="140 5" text="/3x.webp" textsize="1" textfont="GameFontRegular" />
+  </frame>
+
+  <frame id="probe.avif.row" pos="4 -28" z-index="1">
+    <label id="probe.avif.label" pos="0 0" size="48 5" text="AVIF quad" textsize="1.1" textfont="GameFontRegular" />
+    <quad id="probe.avif.quad" pos="54 1" size="10 10" image="https://cdn.7tv.app/emote/01F5VW2TKR0003RCV2Z6JBHCST/4x.avif" keepratio="Fit" />
+    <label id="probe.avif.url" pos="68 0" size="140 5" text="/4x.avif" textsize="1" textfont="GameFontRegular" />
+  </frame>
+
+  <frame id="probe.controls" pos="4 -43" z-index="1">
+    <label id="probe.note" pos="0 0" size="210 5" text="If boxes stay empty, TM likely cannot render this 7TV CDN format directly." textsize="1" textfont="GameFontRegular" />
+  </frame>
+</frame>

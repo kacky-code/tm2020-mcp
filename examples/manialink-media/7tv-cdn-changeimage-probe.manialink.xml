@@ -1,0 +1,44 @@
+<manialink version="3" name="7tv-cdn-changeimage-probe">
+  <frame id="probe.root" pos="-105 65" z-index="31">
+    <quad id="probe.bg" pos="0 0" z-index="0" size="210 66" bgcolor="111b" />
+    <label id="probe.title" pos="4 -4" z-index="1" size="200 5" text="7TV CDN ChangeImageUrl probe" textsize="1.5" textfont="GameFontSemiBold" />
+
+    <frame id="probe.webp.row" pos="4 -16" z-index="1">
+      <label pos="0 0" size="78 5" text="7TV /3x.webp" textsize="1" textfont="GameFontRegular" />
+      <quad id="probe.webp.backing" pos="84 1" z-index="1" size="12 12" bgcolor="a33c" />
+      <quad id="probe.webp.quad" pos="84 1" z-index="2" size="12 12" keepratio="Fit" />
+    </frame>
+
+    <frame id="probe.webp4.row" pos="4 -31" z-index="1">
+      <label pos="0 0" size="78 5" text="7TV /4x.webp" textsize="1" textfont="GameFontRegular" />
+      <quad id="probe.webp4.backing" pos="84 1" z-index="1" size="12 12" bgcolor="3a3c" />
+      <quad id="probe.webp4.quad" pos="84 1" z-index="2" size="12 12" keepratio="Fit" />
+    </frame>
+
+    <frame id="probe.avif.row" pos="4 -46" z-index="1">
+      <label pos="0 0" size="78 5" text="7TV /4x.avif" textsize="1" textfont="GameFontRegular" />
+      <quad id="probe.avif.backing" pos="84 1" z-index="1" size="12 12" bgcolor="36ac" />
+      <quad id="probe.avif.quad" pos="84 1" z-index="2" size="12 12" keepratio="Fit" />
+    </frame>
+
+    <label id="probe.footer" pos="4 -61" z-index="1" size="200 5" text="This matches old EmojiChat: script calls CMlQuad.ChangeImageUrl(url)." textsize="1" textfont="GameFontRegular" />
+  </frame>
+
+  <script>
+  <!--
+  main() {
+    declare CMlQuad Webp <=> (Page.GetFirstChild("probe.webp.quad") as CMlQuad);
+    declare CMlQuad Webp4 <=> (Page.GetFirstChild("probe.webp4.quad") as CMlQuad);
+    declare CMlQuad Avif <=> (Page.GetFirstChild("probe.avif.quad") as CMlQuad);
+
+    Webp.ChangeImageUrl("https://cdn.7tv.app/emote/63071bb9464de28875c52531/3x.webp");
+    Webp4.ChangeImageUrl("https://cdn.7tv.app/emote/63071bb9464de28875c52531/4x.webp");
+    Avif.ChangeImageUrl("https://cdn.7tv.app/emote/01F5VW2TKR0003RCV2Z6JBHCST/4x.avif");
+
+    while (True) {
+      yield;
+    }
+  }
+  -->
+  </script>
+</manialink>

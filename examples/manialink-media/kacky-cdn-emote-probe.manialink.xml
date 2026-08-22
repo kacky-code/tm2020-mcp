@@ -1,0 +1,33 @@
+<manialink version="3" name="kacky-cdn-emote-probe">
+  <frame id="probe.root" pos="-105 65" z-index="37">
+    <quad id="probe.bg" pos="0 0" z-index="0" size="210 52" bgcolor="111b" />
+    <label id="probe.title" pos="4 -4" z-index="1" size="200 5" text="Kacky CDN emote probe: catJAM" textsize="1.5" textfont="GameFontSemiBold" />
+
+    <frame id="probe.static.row" pos="4 -16" z-index="1">
+      <label pos="0 0" size="86 5" text="static image attr" textsize="1" textfont="GameFontRegular" />
+      <quad pos="92 1" z-index="1" size="12 12" bgcolor="a33c" />
+      <quad pos="92 1" z-index="2" size="12 12" image="https://cdn.kacky.gg/emotes/01F6MQ33FG000FFJ97ZB8MWV52.webm" keepratio="Fit" />
+    </frame>
+
+    <frame id="probe.change.row" pos="4 -31" z-index="1">
+      <label pos="0 0" size="86 5" text="ChangeImageUrl" textsize="1" textfont="GameFontRegular" />
+      <quad id="probe.change.backing" pos="92 1" z-index="1" size="12 12" bgcolor="3a3c" />
+      <quad id="probe.change.quad" pos="92 1" z-index="2" size="12 12" keepratio="Fit" />
+    </frame>
+
+    <label id="probe.footer" pos="4 -47" z-index="1" size="200 5" text="Converted 7TV catJAM hosted on Kacky CDN as VP8 WEBM." textsize="1" textfont="GameFontRegular" />
+  </frame>
+
+  <script>
+  <!--
+  main() {
+    declare CMlQuad Emote <=> (Page.GetFirstChild("probe.change.quad") as CMlQuad);
+    Emote.ChangeImageUrl("https://cdn.kacky.gg/emotes/01F6MQ33FG000FFJ97ZB8MWV52.webm");
+
+    while (True) {
+      yield;
+    }
+  }
+  -->
+  </script>
+</manialink>

@@ -1,0 +1,52 @@
+<manialink version="3" name="7tv-animated-changeimage-probe">
+  <frame id="probe.root" pos="-105 65" z-index="33">
+    <quad id="probe.bg" pos="0 0" z-index="0" size="210 82" bgcolor="111b" />
+    <label id="probe.title" pos="4 -4" z-index="1" size="200 5" text="7TV animated ChangeImageUrl: catJAM" textsize="1.5" textfont="GameFontSemiBold" />
+
+    <frame id="probe.webp2.row" pos="4 -16" z-index="1">
+      <label pos="0 0" size="78 5" text="catJAM 2x.webp" textsize="1" textfont="GameFontRegular" />
+      <quad id="probe.webp2.backing" pos="92 1" z-index="1" size="12 12" bgcolor="a33c" />
+      <quad id="probe.webp2.quad" pos="92 1" z-index="2" size="12 12" keepratio="Fit" />
+    </frame>
+
+    <frame id="probe.webp3.row" pos="4 -31" z-index="1">
+      <label pos="0 0" size="78 5" text="catJAM 3x.webp" textsize="1" textfont="GameFontRegular" />
+      <quad id="probe.webp3.backing" pos="92 1" z-index="1" size="12 12" bgcolor="3a3c" />
+      <quad id="probe.webp3.quad" pos="92 1" z-index="2" size="12 12" keepratio="Fit" />
+    </frame>
+
+    <frame id="probe.webp4.row" pos="4 -46" z-index="1">
+      <label pos="0 0" size="78 5" text="catJAM 4x.webp" textsize="1" textfont="GameFontRegular" />
+      <quad id="probe.webp4.backing" pos="92 1" z-index="1" size="12 12" bgcolor="36ac" />
+      <quad id="probe.webp4.quad" pos="92 1" z-index="2" size="12 12" keepratio="Fit" />
+    </frame>
+
+    <frame id="probe.gif.row" pos="4 -61" z-index="1">
+      <label pos="0 0" size="78 5" text="catJAM 3x.gif" textsize="1" textfont="GameFontRegular" />
+      <quad id="probe.gif.backing" pos="92 1" z-index="1" size="12 12" bgcolor="aa3c" />
+      <quad id="probe.gif.quad" pos="92 1" z-index="2" size="12 12" keepratio="Fit" />
+    </frame>
+
+    <label id="probe.footer" pos="4 -77" z-index="1" size="200 5" text="Old EmojiChat path: script sets remote animated URLs on placeholder quads." textsize="1" textfont="GameFontRegular" />
+  </frame>
+
+  <script>
+  <!--
+  main() {
+    declare CMlQuad Webp2 <=> (Page.GetFirstChild("probe.webp2.quad") as CMlQuad);
+    declare CMlQuad Webp3 <=> (Page.GetFirstChild("probe.webp3.quad") as CMlQuad);
+    declare CMlQuad Webp4 <=> (Page.GetFirstChild("probe.webp4.quad") as CMlQuad);
+    declare CMlQuad Gif <=> (Page.GetFirstChild("probe.gif.quad") as CMlQuad);
+
+    Webp2.ChangeImageUrl("https://cdn.7tv.app/emote/01F6MQ33FG000FFJ97ZB8MWV52/2x.webp");
+    Webp3.ChangeImageUrl("https://cdn.7tv.app/emote/01F6MQ33FG000FFJ97ZB8MWV52/3x.webp");
+    Webp4.ChangeImageUrl("https://cdn.7tv.app/emote/01F6MQ33FG000FFJ97ZB8MWV52/4x.webp");
+    Gif.ChangeImageUrl("https://cdn.7tv.app/emote/01F6MQ33FG000FFJ97ZB8MWV52/3x.gif");
+
+    while (True) {
+      yield;
+    }
+  }
+  -->
+  </script>
+</manialink>

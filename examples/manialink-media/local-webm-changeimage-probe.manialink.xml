@@ -1,0 +1,47 @@
+<manialink version="3" name="local-webm-changeimage-probe">
+  <frame id="probe.root" pos="-110 65" z-index="20">
+    <quad id="probe.bg" pos="0 0" z-index="0" size="220 70" bgcolor="111b" />
+    <label id="probe.title" pos="4 -4" z-index="1" size="210 5" text="Local WEBM ChangeImageUrl probe" textsize="1.5" textfont="GameFontSemiBold" />
+
+    <frame id="probe.no-loop.row" pos="4 -16" z-index="1">
+      <label id="probe.no-loop.label" pos="0 0" size="72 5" text="1s VP9 webm" textsize="1.1" textfont="GameFontRegular" />
+      <quad id="probe.no-loop.backing" pos="76 1" z-index="0" size="10 10" bgcolor="a33c" />
+      <quad id="probe.no-loop.quad" pos="76 1" z-index="1" size="10 10" keepratio="Fit" />
+      <label id="probe.no-loop.note" pos="90 0" size="120 5" text="expected: plays once or stays animated" textsize="1" textfont="GameFontRegular" />
+    </frame>
+
+    <frame id="probe.baked-repeat.row" pos="4 -32" z-index="1">
+      <label id="probe.baked-repeat.label" pos="0 0" size="72 5" text="8s baked" textsize="1.1" textfont="GameFontRegular" />
+      <quad id="probe.baked-repeat.backing" pos="76 1" z-index="0" size="10 10" bgcolor="3a3c" />
+      <quad id="probe.baked-repeat.quad" pos="76 1" z-index="1" size="10 10" keepratio="Fit" />
+      <label id="probe.baked-repeat.note" pos="90 0" size="120 5" text="expected: keeps moving longer" textsize="1" textfont="GameFontRegular" />
+    </frame>
+
+    <frame id="probe.loop-input.row" pos="4 -48" z-index="1">
+      <label id="probe.loop-input.label" pos="0 0" size="72 5" text="8s -loop input" textsize="1.1" textfont="GameFontRegular" />
+      <quad id="probe.loop-input.backing" pos="76 1" z-index="0" size="10 10" bgcolor="36ac" />
+      <quad id="probe.loop-input.quad" pos="76 1" z-index="1" size="10 10" keepratio="Fit" />
+      <label id="probe.loop-input.note" pos="90 0" size="120 5" text="tests Petri command shape" textsize="1" textfont="GameFontRegular" />
+    </frame>
+
+    <label id="probe.footer" pos="4 -64" z-index="1" size="210 5" text="Red/green/blue squares are backing boxes; if visible, that WEBM did not render." textsize="1" textfont="GameFontRegular" />
+  </frame>
+
+  <script>
+  <!--
+  main() {
+    declare CMlQuad NoLoop <=> (Page.GetFirstChild("probe.no-loop.quad") as CMlQuad);
+    declare CMlQuad BakedRepeat <=> (Page.GetFirstChild("probe.baked-repeat.quad") as CMlQuad);
+    declare CMlQuad LoopInput <=> (Page.GetFirstChild("probe.loop-input.quad") as CMlQuad);
+
+    NoLoop.ChangeImageUrl("file://Media/Images/tm2020-mcp-probes/no-loop.webm");
+    BakedRepeat.ChangeImageUrl("file://Media/Images/tm2020-mcp-probes/baked-repeat.webm");
+    LoopInput.ChangeImageUrl("file://Media/Images/tm2020-mcp-probes/loop-input.webm");
+
+    while (True) {
+      yield;
+    }
+  }
+  -->
+  </script>
+</manialink>

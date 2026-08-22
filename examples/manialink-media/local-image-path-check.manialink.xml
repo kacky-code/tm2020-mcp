@@ -1,0 +1,9 @@
+<manialink version="3" name="local-image-path-check">
+  <frame id="probe.root" pos="-70 45" z-index="25">
+    <quad id="probe.bg" pos="0 0" z-index="0" size="140 30" bgcolor="111b" />
+    <label id="probe.title" pos="4 -4" z-index="1" size="130 5" text="Local image path check" textsize="1.5" textfont="GameFontSemiBold" />
+    <quad id="probe.backing" pos="4 -14" z-index="1" size="12 12" bgcolor="a33c" />
+    <quad id="probe.image" pos="4 -14" z-index="2" size="12 12" image="file://Media/Images/tm2020-mcp-probes/path-check.png" keepratio="Fit" />
+    <label id="probe.note" pos="20 -16" z-index="1" size="110 5" text="If image covers red, file://Media/Images works." textsize="1" textfont="GameFontRegular" />
+  </frame>
+</manialink>
