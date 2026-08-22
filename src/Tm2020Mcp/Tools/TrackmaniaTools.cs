@@ -14,6 +14,7 @@ public sealed class TrackmaniaTools
     private readonly ManialinkInspector _manialinks = new();
     private readonly ManialinkVideoProbeBuilder _videoProbe = new();
     private readonly ManialinkValidator _validator = new();
+    private readonly ManialinkMediaProbe _mediaProbe = new(new HttpClient { Timeout = TimeSpan.FromSeconds(10) });
 
     public TrackmaniaTools(OpenPlanetClient client)
     {
@@ -165,6 +166,13 @@ public sealed class TrackmaniaTools
             return $"File not found: {path}";
 
         return ValidateManialinkXml(File.ReadAllText(path), target);
+    }
+
+    [McpServerTool(Name = "check_manialink_media"), Description("Fetch every http(s) image, video and audio URL in ManiaLink XML and report the ones the game will silently fail to render: dead URLs, non-200 responses, web pages served where a media file was expected, and animated WebP confirmed from its header. Needs no running game.")]
+    public async Task<string> CheckManialinkMedia(
+        [Description("Raw ManiaLink XML or Interface Designer fragment.")] string xml)
+    {
+        return ManialinkValidator.Format(await _mediaProbe.ProbeAsync(xml));
     }
 
     [McpServerTool(Name = "analyze_emoji_chat_message"), Description("Analyze a Kacky EmojiChat message for emoji shortcodes, Trackmania format codes, unknown emoji, and ManiaLink-safe text.")]

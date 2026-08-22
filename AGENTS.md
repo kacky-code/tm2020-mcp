@@ -40,6 +40,9 @@ local inspection, prototyping, validation, or debugging around the game client/e
   `Tm2020ManialinkFacts.cs` is the single place Trackmania 2020 constraints are encoded;
   `ManialinkValidator.cs` applies them. Change a rule there, not in the validator's branches,
   and record the evidence in `docs/manialink-tm2020.md`.
+  `ManialinkMediaProbe.cs` answers the media questions the engine will not: a real client reports
+  no usable image load state, so reachability and WebP animation are settled by fetching the URL.
+  Keep it client-free; it must never require a running game or the bridge.
 - `examples/` stores small reusable XML fragments.
 - `docs/openplanet/` stores curated API notes with upstream URLs.
 
