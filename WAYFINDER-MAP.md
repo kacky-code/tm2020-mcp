@@ -328,7 +328,11 @@ can-we-build-it question.
 starts requiring a live bridge, the unblocked half of the tool is lost and the Club barrier spreads
 to everything.
 
-### W7 — RAN. Confirms W1/W3/W10, and **refutes W2**.
+### W7 — RAN. Confirms W1, and **refutes W2**.
+
+> **Amended after runs 2-4.** This section originally claimed W3/W10 were confirmed too. They were
+> not: no server-delivered layer has ever appeared in a dump. See the amendment at the end of this
+> section for what three further runs changed.
 
 Run against a real client with Club Access, 29 UI layers observed. This is why the prototype
 existed: one of the documented findings does not survive contact with the engine.
@@ -390,3 +394,59 @@ contributor rather than only Club holders.
   Cosmetic but noisy; worth silencing.
 - Whether `Image` ever populates (perhaps only after a runtime `ChangeImageUrl`) is unanswered. Not
   worth another probe unless the HTTP-side approach proves insufficient.
+
+#### Amendment — runs 2, 3 and 4, and probe revision 2
+
+Run 1 printed no client context, so it could not be attributed to a client state after the fact.
+Probe revision 2 adds that context, decodes `EUILayerType` to a name, prints each layer's
+`<manialink>` opening tag, and walks `MainFrame` when `ControlsCache` is empty.
+
+**W2's refutation is now much stronger.** Three independent dumps:
+
+| run | context | quads | loaded | pending | null `Image` |
+|---|---|---|---|---|---|
+| 1 | playground, layer set A | 2338 | 0 | 0 | 2338 |
+| 2 | playground, layer set A | 2338 | 0 | 0 | 2338 |
+| 3 | solo campaign, `Fall 2020 - 20 part 1` | 2344 | 0 | 0 | 2344 |
+
+Not one quad in 7,020 ever reported a non-null `Image`. Runs 1 and 2 are byte-identical apart from
+rotated Ubisoft CDN asset UUIDs and one recomputed float (`-9.30029` -> `-9.3`), which proves each
+run is a genuinely fresh walk rather than a cached tree. Control counts also drift with live state
+(`UIModule_Race_TimeGap` 47 -> 67, `UIModule_Campaign_PauseMenu` 4052 -> 4062). The engine is being
+read correctly; `CPlugBitmap@ Image` is simply never populated.
+
+**Layer identity is solved, via the XML rather than `AttachId`.** Every layer self-identifies from
+its `<manialink name="...">` attribute, which the probe now prints:
+
+```
+layer  6  UIModule_Race_Chrono            4 controls
+layer 12  UIModule_Race_ScoresTable    2574 controls
+layer 15  UIModule_Race_Record         1286 controls
+layer 24  UIModule_Campaign_PauseMenu  4062 controls
+```
+
+`AttachId` remains `'Unassigned'` on 0/29 layers across all runs — including layer 0,
+`Openplanet_UploadTimeout`, which is a **plugin-created layer made through `UILayerCreate`**. So
+`AttachId` is not something the engine populates and then loses; it is a field the creator must set
+and nobody does. Two consequences: the bridge can set `AttachId` on layers it creates itself, and
+it can identify everyone else's layers by `<manialink name>`. Identity is not a blocker on either
+side.
+
+**Retracted: the `ControlsCache` doubt.** Run 1 showed five layers with `controls=0` and a live
+`MainFrame`, one off 6,560 characters of XML, which looked like the cache under-reporting. Revision
+2 walks `MainFrame` directly in that case and found **zero** extra controls
+(`layersWhereCacheWasEmptyButDescentFoundControls=0`). The names explain it — `Openplanet_UploadTimeout`,
+`Navigation:ResetGlobalSoloGroups`, `CMGame_MenusPreload`, `UIModule_Race_ScoresTable_Visibility`,
+`UIModule_Race_SquadMembers` are script-only logic layers with no visible controls. `ControlsCache`
+is trustworthy as W1 documented, and the descent fallback is dead weight that can be dropped.
+
+**Still open: W3/W10 have never actually been tested.** All 29 layers in every run are Nadeo's own
+`UIModule_*` set plus the one Openplanet layer. No kontrol layer and no ManiaScript gamemode HUD has
+ever entered a dump, so the claim that server-delivered layers surface in `UILayers` is still
+inference from the docs, not observation. Run 3 also showed `maniaApp.Map` is null while
+`Playground` is non-null, so "a playground exists" must not be read as "connected to a server" —
+the probe's context block now makes that distinction visible.
+
+**To close it:** dump while a foreign layer is live — the docker dev-server with a gamemode HUD
+running, or a kontrol layer pushed into the client. It will show up immediately as a 30th layer
+whose `<manialink name>` is not `UIModule_*`.
