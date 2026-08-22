@@ -36,7 +36,7 @@ SCOPE.** No code ships from this map.
 
 - [x] W1 · RESEARCH · Does `CGameManialinkPage` expose a walkable control tree in OpenPlanet's
       AngelScript API, with per-control computed position, size and visibility? · blocks: W5, W7
-- [x] W2 · RESEARCH · Is there any engine signal that a media URL failed to load, or must
+- [!] W2 · RESEARCH · Is there any engine signal that a media URL failed to load, or must
       failure be inferred? Make-or-break for "the image at URL X never loaded". · blocks: W5, W6
 - [x] W3 · RESEARCH · Which of the three render contexts can the bridge observe, and do they
       agree? Map-editor preview, Interface Designer, and a client connected to a server.
@@ -50,7 +50,7 @@ SCOPE.** No code ships from this map.
       the submitted XML, a list of anomalies, or a screenshot? · blocked-by: W1, W2
 - [x] W6 · DECISION · Who is this for, and does it target editor preview or server HUD? Decides
       whether this is a local lab tool or a kontrol development loop. · blocked-by: W2, W3, W4
-- [ ] W7 · PROTOTYPE · Throwaway AngelScript that walks a rendered page and dumps the tree
+- [x] W7 · PROTOTYPE · Throwaway AngelScript that walks a rendered page and dumps the tree
       against a real client. Turns W1's paper answer into a real one. · blocked-by: W1
 - [x] W8 · DECISION · What "easy setup" means for a Windows-only bridge on a public repo:
       release zip, installer, or OpenPlanet plugin-manager listing. · blocked-by: W6
@@ -327,3 +327,66 @@ can-we-build-it question.
 **Carry into the spec:** keep the client-free surface genuinely client-free. If validation ever
 starts requiring a live bridge, the unblocked half of the tool is lost and the Club barrier spreads
 to everything.
+
+### W7 — RAN. Confirms W1/W3/W10, and **refutes W2**.
+
+Run against a real client with Club Access, 29 UI layers observed. This is why the prototype
+existed: one of the documented findings does not survive contact with the engine.
+
+**Confirmed, exactly as documented:**
+
+- `UILayers` is reachable and populated: 29 layers.
+- `LocalPage` is non-null and `MainFrame` resolves on every layer that has content.
+- `ControlsCache` is populated and large: 898, 859 and 883 controls on the biggest layers.
+- Per-control reads are real, not defaults: `ControlId`, `AbsolutePosition_V3`, `Size` and
+  `Visible` all return varied, plausible values (`visible=0` and `visible=1` both appear).
+- `ManialinkPageUtf8` returns the real XML, up to 921,187 characters on one layer.
+- `IsLocalPageScriptRunning` varies (0 on layer 3, 1 elsewhere), so it is live data.
+
+**Refuted: the `DownloadInProgress` + `Image` tri-state does not detect load failure.**
+
+Totals across the whole dump: **2,338 image quads, 0 loaded, 0 pending, 2,338 "failed".**
+
+That is not a failure rate, it is a broken inference. The quads in question include Nadeo's own
+menu chrome (`file://Media/Manialinks/Nadeo/.../ScrollBar_Center.dds`, arrow icons, the loading
+spinner) and remote Ubisoft CDN images
+(`https://trackmania-prod-media-s3.cdn.ubi.com/.../original.jpg`, the Maniapubs panels). All of
+them were visibly rendering on screen at the time. `CPlugBitmap@ Image` is simply not populated on
+`CGameManialinkQuad` in this context, for local or remote images alike, and `DownloadInProgress`
+was false everywhere too.
+
+Checked and also dead: the game does not log image load failures. The Openplanet log contains no
+image, texture or download diagnostics at all.
+
+**Second refutation: `AttachId` is useless for identifying layers.** All 29 layers report
+`attachId='Unassigned'`. The plan to tell a kontrol layer from a Nadeo layer by attach id does not
+work. Layer identity has to come from the XML instead, via `ManialinkPageUtf8` and the `id`/`name`
+attributes on the `<manialink>` element.
+
+**What this means for the design.** The feature splits, and only one half survives:
+
+- **Structural readback: works.** Did the layer render, how many controls, where is each one, is it
+  visible, is its ManiaScript running, what XML does the client actually hold. All confirmed.
+- **Media failure detection: does not work from inside the game.** The headline capability from W5
+  cannot be built on these members.
+
+**Where media failure should be answered instead: from the MCP side, over plain HTTP.** The MCP
+server is a .NET process. It can extract every `image`, `imagefocus` and `data` URL from the XML
+and request them directly, which detects the failures the engine will not report: 404s and other
+non-200s, wrong content types, and unreachable hosts.
+
+Better still, it resolves the ambiguity the static validator can only warn about. `media.image-format`
+currently says "static WebP loads, animated WebP does not, and the URL does not say which this is".
+Reading the WebP header (a `VP8X` chunk with the `ANIM` flag set) decides it. The same applies to
+sniffing whether a `.webm` is really VP9.
+
+This is strictly better than the in-game approach it replaces: it needs no client, no Developer
+Mode and no Club Access, so it lands on the ungated side of the W8 split and helps every
+contributor rather than only Club holders.
+
+**Follow-ups this raises:**
+
+- `TM2020Bridge/Main.as` lines 389 and 410 emit `Signed/Unsigned mismatch` warnings on every load.
+  Cosmetic but noisy; worth silencing.
+- Whether `Image` ever populates (perhaps only after a runtime `ChangeImageUrl`) is unanswered. Not
+  worth another probe unless the HTTP-side approach proves insufficient.
