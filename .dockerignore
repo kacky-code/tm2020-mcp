@@ -1,7 +1,8 @@
 .git/
 .DS_Store
-bin/
-obj/
+# Needs the ** prefix: a bare "obj/" matches only a top-level obj directory, so the host's
+# src/Tm2020Mcp/obj/project.assets.json would be copied in and override the container restore.
+**/bin/
+**/obj/
 TestResults/
 tests/
-

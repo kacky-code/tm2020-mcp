@@ -242,3 +242,26 @@ mid-load and report a false failure, and that mistake would be made once per age
 "client running but not connected to a server", "layer not found", "settled with no anomalies" and
 "settled with anomalies" are five different answers. Returning an empty anomaly list when the
 bridge is simply dead is the single worst outcome available, because it reads as success.
+
+### Note on Docker, attached to W8
+
+Asked directly: can all of it run in Docker? No, and the boundary is inherent rather than a gap
+to close.
+
+| Piece | Docker | Why |
+|---|---|---|
+| MCP server (.NET) | yes | the Dockerfile already does this, reaching the bridge at `host.docker.internal:29100` |
+| Dedicated server for mode logic | yes, already | `evoesports/trackmania`, headless |
+| **Game client + OpenPlanet** | **no** | needs a GPU, a display and an Ubisoft/Epic login; OpenPlanet hooks the live process; ManiaLink rendering *is* the renderer |
+
+**This is the feature's premise, not an obstacle to it.** A HUD only exists on a client. If it could
+be observed headlessly the docker dev-server would already cover it and this whole map would be
+pointless.
+
+Not physically impossible: TM2020 runs under Proton/Wine and GPU passthrough into containers
+exists. It would need passthrough, an X/Wayland display, an Ubisoft login inside the container and
+OpenPlanet working under Wine. For a dev-loop tool aimed at kontrol contributors that is a large
+amount of fragility for no gain over running the game on the Windows box that already exists.
+
+Docker would not reduce the setup burden anyway: the burden is one folder copy into
+`OpenplanetNext\Plugins`, which is exactly what W8's `.op` release turns into a double-click.

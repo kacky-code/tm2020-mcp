@@ -1,9 +1,10 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
-COPY tm2020-mcp.slnx ./
+# Restore the project, not the solution: the solution also lists the test project, which the
+# runtime image has no reason to carry.
 COPY src/Tm2020Mcp/Tm2020Mcp.csproj src/Tm2020Mcp/
-RUN dotnet restore
+RUN dotnet restore src/Tm2020Mcp/Tm2020Mcp.csproj
 
 COPY src/Tm2020Mcp src/Tm2020Mcp
 RUN dotnet publish src/Tm2020Mcp/Tm2020Mcp.csproj \
