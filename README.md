@@ -26,6 +26,108 @@ Interface Designer support is diagnostic-only for now. The bridge can detect `CG
 - .NET 10 SDK
 - An MCP-compatible client
 
+## Windows Quickstart
+
+The whole path from nothing to a working loop. The game client half is Windows-native by
+necessity: Openplanet hooks the running game process, so it cannot be containerised.
+
+### 1. Prerequisites
+
+- Trackmania 2020 (Ubisoft Connect or Epic)
+- Openplanet for Trackmania, from https://openplanet.dev/download
+- .NET 10 SDK, from https://dotnet.microsoft.com/download (or Docker Desktop, see below)
+- git
+
+### 2. Clone
+
+```powershell
+git clone https://github.com/kacky-code/tm2020-mcp.git
+cd tm2020-mcp
+```
+
+### 3. Install the bridge plugin
+
+```powershell
+$PluginDir = "$env:USERPROFILE\OpenplanetNext\Plugins"
+New-Item -ItemType Directory -Force -Path $PluginDir | Out-Null
+Remove-Item -Recurse -Force "$PluginDir\TM2020Bridge" -ErrorAction SilentlyContinue
+Copy-Item -Recurse ".\openplanet-plugin\TM2020Bridge" "$PluginDir\TM2020Bridge"
+```
+
+### 4. Enable it in game
+
+1. Launch Trackmania and press `F3` for the Openplanet overlay.
+2. Enable **Developer Mode** in Openplanet's settings. Plugins installed as a plain folder are
+   unsigned, so they will not load without it.
+3. Load or reload plugins from the Openplanet menu. The exact menu label moves between Openplanet
+   versions; look for "Load plugin" or "Reload plugins" under the developer menu.
+
+### 5. Verify the bridge is listening
+
+```powershell
+curl.exe -sS --max-time 3 http://127.0.0.1:29100/status
+```
+
+**Use `curl.exe`, not `curl`.** PowerShell aliases `curl` to `Invoke-WebRequest`, which takes
+different arguments and will fail confusingly.
+
+Expected:
+
+```json
+{"running":true,"editor_open":false,"map_editor":false,"interface_designer":false,"module_editor":false,"manialink_preview":false}
+```
+
+No response means the plugin is not loaded. Check the Openplanet log.
+
+### 6. Build the MCP server
+
+```powershell
+dotnet build
+```
+
+### 7. Point your MCP client at it
+
+For Claude Code:
+
+```powershell
+claude mcp add tm2020 -- dotnet run --project C:\path\to\tm2020-mcp\src\Tm2020Mcp\Tm2020Mcp.csproj --no-build
+```
+
+For a client that takes JSON config, see [Run Native .NET](#run-native-net) below. The server
+reads `TM2020_BRIDGE_URL` and defaults to `http://127.0.0.1:29100`, so it needs no configuration
+when the game runs on the same machine.
+
+`--no-build` means step 6 has to have run first.
+
+### 8. Check it end to end
+
+Ask the agent to call `get_tm2020_status`. It should report the same thing step 5 did.
+
+`validate_manialink_xml` works with no game running at all, so it is the cheapest way to confirm
+the MCP server itself is wired up correctly.
+
+### 9. Optional: run the W7 readback probe
+
+Throwaway probe answering wayfinder ticket W7 (see `WAYFINDER-MAP.md`): whether server-delivered
+UI layers really expose a walkable page, and whether a failed image load is detectable.
+
+```powershell
+$PluginDir = "$env:USERPROFILE\OpenplanetNext\Plugins"
+Remove-Item -Recurse -Force "$PluginDir\_W7Probe" -ErrorAction SilentlyContinue
+Copy-Item -Recurse ".\openplanet-plugin\_W7Probe" "$PluginDir\_W7Probe"
+```
+
+Reload plugins, **join a server** (the local docker dev-server is ideal, and a public server works
+too since the probe only reads), then use **Plugins > W7 Readback Probe: dump UI layers**.
+
+Output goes to the Openplanet log, reachable from the Openplanet overlay. It reports the layer
+count, and per layer the attach id, visibility, whether its ManiaScript is running, the control
+count, and an image-quad tally of `loaded / pending / failed` with a line per failure.
+
+`ClientManiaAppPlayground is null` means you are not on a server yet.
+
+Delete the folder when it has answered its question.
+
 ## Native .NET Or Docker?
 
 Use native .NET when you can. It is the simplest setup because the MCP server and OpenPlanet bridge both run on the host, so `http://127.0.0.1:29100` works directly.
