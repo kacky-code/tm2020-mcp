@@ -33,7 +33,10 @@ necessity: Openplanet hooks the running game process, so it cannot be containeri
 
 ### 1. Prerequisites
 
-- Trackmania 2020 (Ubisoft Connect or Epic)
+- Trackmania 2020 with **Club Access**. This is a hard requirement, not a nicety: the bridge is an
+  unsigned plugin, unsigned plugins load only under Openplanet's Developer Mode, and Developer Mode
+  is unavailable on Starter and Standard editions. Nadeo restricts it to prevent piracy. See
+  https://openplanet.dev/next/club
 - Openplanet for Trackmania, from https://openplanet.dev/download
 - .NET 10 SDK, from https://dotnet.microsoft.com/download (or Docker Desktop, see below)
 - git
@@ -75,8 +78,10 @@ Test-Path "$Repo\openplanet-plugin\TM2020Bridge"
 ### 4. Enable it in game
 
 1. Launch Trackmania and press `F3` for the Openplanet overlay.
-2. Enable **Developer Mode** in Openplanet's settings. Plugins installed as a plain folder are
-   unsigned, so they will not load without it.
+2. Enable **Developer Mode** under Developer > Signature Mode in the Openplanet overlay. Plugins
+   installed as a plain folder are unsigned, so they will not load without it. If the option is
+   missing or refuses to enable, the account does not have Club Access, and no local install of
+   this plugin will work until it does.
 3. Load or reload plugins from the Openplanet menu. The exact menu label moves between Openplanet
    versions; look for "Load plugin" or "Reload plugins" under the developer menu.
 

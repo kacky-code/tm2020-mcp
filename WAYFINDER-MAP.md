@@ -52,7 +52,7 @@ SCOPE.** No code ships from this map.
       whether this is a local lab tool or a kontrol development loop. · blocked-by: W2, W3, W4
 - [ ] W7 · PROTOTYPE · Throwaway AngelScript that walks a rendered page and dumps the tree
       against a real client. Turns W1's paper answer into a real one. · blocked-by: W1
-- [x] W8 · DECISION · What "easy setup" means for a Windows-only bridge on a public repo:
+- [~] W8 · DECISION · What "easy setup" means for a Windows-only bridge on a public repo:
       release zip, installer, or OpenPlanet plugin-manager listing. · blocked-by: W6
 - [x] W9 · DECISION · How an agent drives the loop unattended: validate, push, read back,
       correct, stop. Including the failure mode when no client is running. · blocked-by: W5, W7
@@ -265,3 +265,39 @@ amount of fragility for no gain over running the game on the Windows box that al
 
 Docker would not reduce the setup burden anyway: the burden is one folder copy into
 `OpenplanetNext\Plugins`, which is exactly what W8's `.op` release turns into a double-click.
+
+### W8 — REOPENED. The `.op` release does not clear the real barrier.
+
+Corrected by the human after the decision was recorded. **Openplanet Developer Mode, which is what
+loads an unsigned plugin, effectively requires Trackmania Club Access.** On Starter and Standard
+editions only plugins shipped with Openplanet or signed-and-approved ones load. This is a Nadeo
+anti-piracy requirement, not an Openplanet policy.
+
+Sources: https://openplanet.dev/next/club, https://openplanet.dev/docs/tutorials/writing-plugins
+
+Why the original answer was wrong: a `.op` bundle downloaded from a GitHub release is still an
+**unsigned local plugin**. It needs Developer Mode exactly like the folder install does. The
+release changes the install from "copy a folder" to "download a file", which was never the real
+friction. The real friction is that every user needs Club Access.
+
+The research gap that caused it: W8 asked what good packaging looks like and never asked what
+*installing an unsigned plugin requires*. Distribution format and load eligibility are different
+questions and only the second one gates adoption.
+
+**Consequence for W6.** The audience decision was kontrol contributors. If every contributor needs
+Club Access, that audience is materially smaller than it looked, and the tool would help only the
+subset who already pay for Club. Submitting to the Openplanet plugin manager is no longer the
+premature option I judged it to be; it is the only route that makes the tool usable by a kontrol
+contributor on Standard access.
+
+**Re-decide between:**
+
+1. Submit the bridge to the Openplanet plugin manager and get it signed. Removes the Club barrier
+   for everyone, at the cost of a public review process and a real support commitment.
+2. Keep it unsigned and accept the tool is Club-Access-only, documenting that as a prerequisite.
+   Honest and free, but shrinks the audience to whoever already has Club.
+3. Stay unsigned for now, ship the value that needs no game client at all (the static validator
+   already works with nothing running), and revisit signing once W7 has proven the readback.
+
+**Immediate effect:** W7 cannot run at all without Club Access on the machine running the probe.
+That is now the gate on the whole prototype.
