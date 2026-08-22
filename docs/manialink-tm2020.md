@@ -48,9 +48,17 @@ and leaves the backing box, sometimes in a corrupted decode state. Mirror the as
 WebM instead. Proven by `7tv-animated-static-probe.manialink.xml` and
 `7tv-catjam-format-matrix.manialink.xml`.
 
-**`.webp` is ambiguous and the URL never tells you which.** Static WebP loads; animated WebP
-does not. The validator warns rather than erring, because both cases look identical in the
-markup. Proven by `7tv-cdn-static-probe.manialink.xml`.
+**`.webp` is ambiguous in the markup, but decidable from the file.** Static WebP loads; animated
+WebP does not, and the URL never says which it is, so `validate_manialink_xml` can only warn.
+`check_manialink_media` settles it by fetching the first bytes and reading the RIFF header: an
+extended-format `VP8X` chunk carries an `ANIM` flag (`0x02`) in its flags byte at offset 20.
+
+That check was validated against the in-game record in
+[`emoji-chat-investigation.md`](emoji-chat-investigation.md): the two 7TV WebPs observed to load
+classify as static, and the three catJAM WebPs observed to fail classify as animated. Seven of
+seven, including a WebM that worked and a deliberately dead URL.
+
+Proven by `7tv-cdn-static-probe.manialink.xml`.
 
 **`file://` paths that point at real media did not load** in map-editor ManiaLink preview,
 for relative and absolute forms alike. Host over http(s). Proven by
@@ -85,6 +93,19 @@ are easy to confuse. Validate with `target: "designer"` for fragments meant to b
 Those must omit the XML declaration and the `<manialink>`/`<manialinks>` wrapper, stick to
 static `frame`, `quad` and `label` nodes, and carry no runtime attributes (`action`,
 `scriptaction`, `scriptevents`, `class`, `hidden`, `url`, `manialink`).
+
+## What the game will not tell you
+
+A running client cannot report whether an image loaded. `CGameManialinkQuad` exposes
+`DownloadInProgress` and `CPlugBitmap@ Image`, which look like they should answer it, and do not:
+probed against a real client, **2,338 image quads reported `Image` as null and `DownloadInProgress`
+as false, including Nadeo menu chrome and Ubisoft CDN images that were visibly on screen**. The
+game logs nothing about image loading either.
+
+So reachability is answered from outside the game, by `check_manialink_media` fetching the URLs
+directly. That needs no client, no Openplanet and no Club Access. What a client *can* report is
+structure: the control tree, computed positions, sizes, visibility, and whether a layer's
+ManiaScript is running.
 
 ## Sources
 
