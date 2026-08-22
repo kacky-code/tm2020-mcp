@@ -41,17 +41,35 @@ necessity: Openplanet hooks the running game process, so it cannot be containeri
 ### 2. Clone
 
 ```powershell
+cd $HOME
 git clone https://github.com/kacky-code/tm2020-mcp.git
 cd tm2020-mcp
 ```
 
+**Use a normal PowerShell, not an elevated one.** Nothing here needs administrator rights, and an
+elevated prompt starts in `C:\Windows\System32`, so any relative path silently resolves against
+the wrong directory.
+
 ### 3. Install the bridge plugin
 
+Set `$Repo` to wherever you cloned it. The commands then work from any directory, which avoids the
+most common failure here: a relative path resolving against `C:\Windows\System32`.
+
 ```powershell
+$Repo      = "$HOME\tm2020-mcp"
 $PluginDir = "$env:USERPROFILE\OpenplanetNext\Plugins"
+
 New-Item -ItemType Directory -Force -Path $PluginDir | Out-Null
 Remove-Item -Recurse -Force "$PluginDir\TM2020Bridge" -ErrorAction SilentlyContinue
-Copy-Item -Recurse ".\openplanet-plugin\TM2020Bridge" "$PluginDir\TM2020Bridge"
+Copy-Item -Recurse "$Repo\openplanet-plugin\TM2020Bridge" "$PluginDir\TM2020Bridge"
+
+Get-ChildItem $PluginDir
+```
+
+`Get-ChildItem` must list `TM2020Bridge`. If it does not, `$Repo` is wrong:
+
+```powershell
+Test-Path "$Repo\openplanet-plugin\TM2020Bridge"
 ```
 
 ### 4. Enable it in game
@@ -112,9 +130,8 @@ Throwaway probe answering wayfinder ticket W7 (see `WAYFINDER-MAP.md`): whether 
 UI layers really expose a walkable page, and whether a failed image load is detectable.
 
 ```powershell
-$PluginDir = "$env:USERPROFILE\OpenplanetNext\Plugins"
 Remove-Item -Recurse -Force "$PluginDir\_W7Probe" -ErrorAction SilentlyContinue
-Copy-Item -Recurse ".\openplanet-plugin\_W7Probe" "$PluginDir\_W7Probe"
+Copy-Item -Recurse "$Repo\openplanet-plugin\_W7Probe" "$PluginDir\_W7Probe"
 ```
 
 Reload plugins, **join a server** (the local docker dev-server is ideal, and a public server works
