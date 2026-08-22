@@ -23,6 +23,9 @@ local inspection, prototyping, validation, or debugging around the game client/e
 - Update README/docs when MCP tools, bridge endpoints, setup, or examples change.
 - Keep OpenPlanet API notes under `docs/openplanet/` curated and source-linked; do not
   dump full raw websites into git.
+- Trackmania 2020 ManiaLink differs from the TMF and Maniaplanet dialects that most web
+  references describe. Prefer `docs/manialink-tm2020.md` and the probe files in
+  `examples/` over a general ManiaLink reference, and do not copy TMF snippets.
 - Keep generated/raw docs snapshots out of git. `docs/openplanet/raw/` is ignored.
 - Do not commit build outputs (`bin/`, `obj/`, `TestResults/`).
 
@@ -34,6 +37,9 @@ local inspection, prototyping, validation, or debugging around the game client/e
 - `src/Tm2020Mcp/Tools/TrackmaniaTools.cs` exposes MCP tools.
 - `src/Tm2020Mcp/EmojiChat/` contains local EmojiChat parsing/preview helpers.
 - `src/Tm2020Mcp/Manialinks/` contains local ManiaLink inspection/sanitization helpers.
+  `Tm2020ManialinkFacts.cs` is the single place Trackmania 2020 constraints are encoded;
+  `ManialinkValidator.cs` applies them. Change a rule there, not in the validator's branches,
+  and record the evidence in `docs/manialink-tm2020.md`.
 - `examples/` stores small reusable XML fragments.
 - `docs/openplanet/` stores curated API notes with upstream URLs.
 

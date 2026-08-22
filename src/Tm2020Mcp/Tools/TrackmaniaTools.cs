@@ -13,6 +13,7 @@ public sealed class TrackmaniaTools
     private readonly EmojiChatAnalyzer _emojiChat = new();
     private readonly ManialinkInspector _manialinks = new();
     private readonly ManialinkVideoProbeBuilder _videoProbe = new();
+    private readonly ManialinkValidator _validator = new();
 
     public TrackmaniaTools(OpenPlanetClient client)
     {
@@ -135,6 +136,35 @@ public sealed class TrackmaniaTools
         [Description("Raw ManiaLink XML or Interface Designer fragment.")] string xml)
     {
         return _manialinks.InspectInteractiveControls(xml);
+    }
+
+    [McpServerTool(Name = "validate_manialink_xml"), Description("Check ManiaLink XML against Trackmania 2020 constraints: element names, media formats the client can actually decode, the 320x180 coordinate space, script-event wiring, duplicate ids, and Interface Designer paste-safety. Run this before pushing XML into the game.")]
+    public string ValidateManialinkXml(
+        [Description("Raw ManiaLink XML or Interface Designer fragment.")] string xml,
+        [Description("Where the XML is going: \"manialink\" for a document pushed to the game or served as HUD, \"designer\" for a fragment pasted into the in-game Interface Designer.")] string target = "manialink")
+    {
+        var parsed = target.Trim().ToLowerInvariant() switch
+        {
+            "designer" or "interfacedesigner" or "interface-designer" => ManialinkTarget.InterfaceDesigner,
+            "manialink" or "" => ManialinkTarget.Manialink,
+            _ => (ManialinkTarget?)null
+        };
+
+        if (parsed is null)
+            return $"Unknown target '{target}'. Use 'manialink' or 'designer'.";
+
+        return ManialinkValidator.Format(_validator.Validate(xml, parsed.Value));
+    }
+
+    [McpServerTool(Name = "validate_manialink_file"), Description("Read a ManiaLink XML file from disk and validate it against Trackmania 2020 constraints.")]
+    public string ValidateManialinkFile(
+        [Description("Absolute path to a .xml file.")] string path,
+        [Description("Where the XML is going: \"manialink\" or \"designer\".")] string target = "manialink")
+    {
+        if (!File.Exists(path))
+            return $"File not found: {path}";
+
+        return ValidateManialinkXml(File.ReadAllText(path), target);
     }
 
     [McpServerTool(Name = "analyze_emoji_chat_message"), Description("Analyze a Kacky EmojiChat message for emoji shortcodes, Trackmania format codes, unknown emoji, and ManiaLink-safe text.")]

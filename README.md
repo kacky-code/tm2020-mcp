@@ -15,6 +15,7 @@ The project has two pieces:
 - Clear the current ManiaLink preview.
 - Trigger map-editor autosave.
 - Detect whether the map editor, Interface Designer, or module editor is active.
+- Validate ManiaLink XML against Trackmania 2020 constraints before pushing it into the game (`validate_manialink_xml`, `validate_manialink_file`). Checks the v3 dialect, element names, media formats the client can actually decode, the 320x180 coordinate space, script-event wiring, duplicate ids, and Interface Designer paste-safety. Rules and their evidence: [`docs/manialink-tm2020.md`](docs/manialink-tm2020.md).
 
 Interface Designer support is diagnostic-only for now. The bridge can detect `CGameEditorManialink`, but XML injection currently targets the map editor's `PluginMapType.ManialinkText` path.
 
