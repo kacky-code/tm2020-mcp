@@ -52,7 +52,7 @@ SCOPE.** No code ships from this map.
       whether this is a local lab tool or a kontrol development loop. · blocked-by: W2, W3, W4
 - [ ] W7 · PROTOTYPE · Throwaway AngelScript that walks a rendered page and dumps the tree
       against a real client. Turns W1's paper answer into a real one. · blocked-by: W1
-- [~] W8 · DECISION · What "easy setup" means for a Windows-only bridge on a public repo:
+- [x] W8 · DECISION · What "easy setup" means for a Windows-only bridge on a public repo:
       release zip, installer, or OpenPlanet plugin-manager listing. · blocked-by: W6
 - [x] W9 · DECISION · How an agent drives the loop unattended: validate, push, read back,
       correct, stop. Including the failure mode when no client is running. · blocked-by: W5, W7
@@ -301,3 +301,29 @@ contributor on Standard access.
 
 **Immediate effect:** W7 cannot run at all without Club Access on the machine running the probe.
 That is now the gate on the whole prototype.
+
+### W8 — RE-RESOLVED. Stay unsigned; lead with the half that needs no client.
+
+Club Access is documented as a hard prerequisite and the install stays a folder or `.op` copy. No
+plugin-manager submission yet.
+
+The reasoning that changed: the tool's value splits cleanly in two, and only one half is gated.
+
+- **Needs no game, no Club, no bridge:** the static validator from `545a66e`. It runs anywhere,
+  including CI and a contributor's laptop with Trackmania not installed. This is the half to lead
+  with and it is already shipped.
+- **Needs a client, Developer Mode and Club Access:** everything on the bridge, including the whole
+  readback round trip.
+
+Committing to a public review process and an ongoing support obligation for a feature nobody has
+watched work once is the wrong order. Signing is the natural step **after** W7 proves the readback
+earns an audience, and the reopened analysis above is preserved so that decision starts from the
+right facts rather than being rediscovered.
+
+**Not blocked in practice:** the human confirmed Club Access on the machine that will run W7, so
+the prototype can proceed today. The Club constraint is a distribution question, not a
+can-we-build-it question.
+
+**Carry into the spec:** keep the client-free surface genuinely client-free. If validation ever
+starts requiring a live bridge, the unblocked half of the tool is lost and the Club barrier spreads
+to everything.
