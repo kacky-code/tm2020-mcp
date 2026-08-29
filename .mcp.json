@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "tm2020": {
+      "type": "stdio",
+      "command": "dotnet",
+      "args": ["run", "--project", "src/Tm2020Mcp/Tm2020Mcp.csproj"],
+      "env": {}
+    }
+  }
+}

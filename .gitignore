@@ -21,3 +21,10 @@ Spring_*.zip
 # Assembled design-canvas payload: ~2 MB of editor code, regenerated from the
 # .dc.html sources beside it. See docs/blueprint/README.md.
 docs/blueprint/kacky-map-blueprint.html
+
+# PuzzleMode working artifacts. The plugin lives at kacky-code/puzzlemode, whose first
+# commit is the original (identical to PuzzleModeOld/), so none of this needs tracking.
+PuzzleMode.zip
+PuzzleModeOld/
+PuzzleMode-*.md
+PuzzleMode-*.diff

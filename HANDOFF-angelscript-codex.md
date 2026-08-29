@@ -57,6 +57,36 @@ Every one of these came out of real code, not a style guide.
    Guard, and print when a guard fires so the guard earns its place or gets deleted.
 5. **`cast<T>()` returns null rather than throwing.** Check the result, always.
 6. **`yield()` inside long-running loops**, or the game hangs. See `Main()` in `TM2020Bridge`.
+7. **A ternary's two branches can never be two mutually-convertible types.** This cost a reload
+   on 2026-08-29: `Names += (Info is null ? "?" : Info.Name);` fails to compile with
+   `Can't find unambiguous implicit conversion to make both expressions have the same type`,
+   because `Info.Name` is a `wstring` and `"?"` is a `string`. The manual
+   ([doc_expressions](https://www.angelcode.com/angelscript/sdk/docs/manual/doc_expressions.html))
+   spells out why: the compiler converts "by following the principle of least cost", and
+   *"if the conversion doesn't work, **or the conversion of either expression cost the same**,
+   then the compiler will give an error."* string↔wstring converts equally well in both
+   directions, so it is a tie, so it is an error. Note the asymmetry that makes this
+   counter-intuitive: `cond ? SomeArray.Length : 4` (uint vs int literal) compiles fine, because
+   *that* conversion has a cheaper direction. Assign into a typed local instead:
+   ```angelscript
+   string One = "?";
+   if (Info !is null) One = Info.Name;   // conversion happens on assignment, no tie to break
+   ```
+   The same trap is waiting on any engine `Name`, `IdName` or other `wstring` member.
+8. **A widget's label IS its ImGui id.** `UI::Button("Select###" + Name)` collides for every row
+   whose `Name` is `""` — and names come back empty whenever an article model has not loaded, so
+   two unresolved rows become one button and clicking either drives whichever ImGui saw first.
+   The symptom is `2 visible items with conflicting id`. Two rules fall out, both learned from
+   PuzzleMode on 2026-08-29:
+   - Key ids on something guaranteed unique and stable, normally the row index, never a value
+     read from the engine.
+   - A label that *changes* silently changes the widget's identity too. `UI::Button(ButtonText)`
+     where the caption flips between "Load challenge" and "Reload challenge" is a different
+     widget each way; it needs an explicit `###` suffix to stay one.
+
+   TrackmaniaBingo (~9,700 lines, the biggest local reference) puts `##` on essentially every
+   widget for this reason — down to `"+##plus"` and `"-##minus"`, because a `+` button is
+   precisely the thing you end up with two of.
 
 ## Logging is the only assertion surface
 
@@ -146,7 +176,37 @@ Trackmania with **Club Access**, because the bridge is unsigned, unsigned plugin
 Mode, and Developer Mode is Club-only. Enable it at F3 > Developer > Signature Mode. If that menu
 is missing, the account does not have Club Access and no amount of copying files will help.
 
-## First task
+## What is actually open
 
-`HANDOFF-editor-facts.md` has five unverified claims and a probe skeleton. That is the intended
-first use of everything above.
+Updated 2026-08-29, after a session that built `kacky-code/puzzlemode` against a live client.
+
+**In this repo**
+
+- `HANDOFF-editor-facts.md` E1 and E3. E2, E4 and E5 are answered. E3's underlying lazy-load
+  behaviour is measured, but `GetCollectorNod()` itself was never called.
+- `WAYFINDER-MAP.md` W2: is there any engine signal that a media URL failed to load, or must
+  failure be inferred? Nine of the ten tickets are closed; this is the one left, and it is
+  make-or-break for "the image at URL X never loaded".
+
+**In `kacky-code/puzzlemode`**, which is where the live-client work now happens
+
+- **The Simple editor resolves no block or item names.** Advanced works and reports
+  `inventory loaded: 3757 blocks, 632 items`. Not a timing race: the load retries every frame and
+  ran for seconds without recovering. `LogInventoryRootContents` is already in the plugin and
+  prints article and Nadeo-authored counts per root. Load once in each mode and compare; that
+  settles this and the next item together.
+- **The inventory root index is not settled.** `C_RootBlocks = 0` came from logging
+  `CurrentRootNode` by identity. Editor++ uses root 1 for blocks and names root 0 `CrashBlocks`,
+  and the plugin originally used 1. Both readings can be true, because the root the editor has
+  *selected* need not be the root holding the library. Every root reports an empty `NodeName`
+  **and** an empty `Name`, so a wrong index never announces itself; it silently reads a different
+  tree. Three separate bugs have come from this.
+- **Rotated multi-cell base blocks are unverified end to end.** `BlockAnchorCoord` works and the
+  anchor correction shows in the log, but nobody has placed a long block, exported a base row,
+  rotated it, and confirmed it reports "has been turned" rather than "missing".
+- **Free blocks cannot be part of a base.** Detected and refused rather than silently mismatched.
+  Supporting them needs `Dev::GetOffsetVec3`, which is the one thing here that breaks on a game
+  update.
+
+Measured engine facts and the reference-plugin list are in `kacky-code/vault` under
+`openplanet/`, marked measured / documented / open. Read that before re-deriving anything.

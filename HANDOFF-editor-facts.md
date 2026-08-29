@@ -1,7 +1,12 @@
 # Handoff: settle five map-editor facts with the bridge
 
 Status: **E2, E4 and E5 answered against a running client on 2026-08-29** — see "Answers"
-below. E1 and E3 still open. Created 2026-08-28.
+below. **E1 and E3 still open**, though E3's underlying lazy-load behaviour is now measured.
+Created 2026-08-28.
+
+The plugin this was written for now lives at `kacky-code/puzzlemode`, and the wider body of
+editor knowledge this produced is in `kacky-code/vault` under `openplanet/`, where claims are
+marked measured / documented / open. This file stays the record of the five specific questions.
 
 ## Why this exists
 
@@ -61,6 +66,24 @@ name. The readable name is on `BlockInfo.IdName`.
 **Not answered: mid-air removal.** Every observation above is at ground level, where the
 terrain layer is what makes `GetBlock` non-null. Whether `GetBlock` returns null after removing
 a block placed in the air is untested.
+
+**E3 is still open, but the phenomenon behind it is settled.** Measured across a full PuzzleMode
+session on 2026-08-29: article models load lazily, and before one loads `Article.LoadedNod` is
+null. Casting that and reading `.Name` is a null dereference that takes **the game** down rather
+than returning empty. That is the same lazy-load boundary E3 asks about, and it answers the part
+that matters: the failure mode is a crash, not a null return, so E3's "resolve lazily rather than
+in a constructor" recommendation is necessary regardless of what `GetCollectorNod()` itself
+returns. The call was never made, so the literal question stands.
+
+Two more measurements from that session bear on the same area, neither of them in the original
+five:
+
+- **A free block has no grid coordinate.** `CoordX` is stored negative, so through the uint it
+  reads as ~4.29 billion. Detecting one is public API (`int(block.CoordX) < 0`); reading its real
+  position needs `Dev::GetOffsetVec3`.
+- **A multi-cell block's `Coord` changes with its direction**, because the editor rotates around
+  the minimum x/z corner. `BlockUnitsE[i].AbsoluteOffset` carries the per-cell absolute
+  coordinate and is stable under rotation.
 
 E1 to E3 are read-only. **E4 and E5 place and delete blocks, so run them on a scratch map.**
 
