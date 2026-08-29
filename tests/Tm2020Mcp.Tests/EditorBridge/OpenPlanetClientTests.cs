@@ -90,6 +90,111 @@ public sealed class OpenPlanetClientTests
         Assert.Equal("""{"id":"gps","action":"open"}""", evt.Body);
     }
 
+    [Fact]
+    public async Task CreateMapAsync_PostsTheEngineNamesTheBridgeExpects()
+    {
+        HttpRequestMessage? captured = null;
+        string? capturedBody = null;
+        using var http = new HttpClient(new StubHandler(async (request, cancellationToken) =>
+        {
+            captured = request;
+            capturedBody = request.Content is null
+                ? null
+                : await request.Content.ReadAsStringAsync(cancellationToken);
+
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("""{"created":true,"map_editor":false}""")
+            };
+        }));
+
+        var client = new OpenPlanetClient(http, "http://bridge");
+
+        var result = await client.CreateMapAsync(new NewMapRequest());
+
+        Assert.True(result.Success);
+        Assert.Equal("http://bridge/map/new", captured?.RequestUri?.ToString());
+        Assert.Equal(HttpMethod.Post, captured?.Method);
+        Assert.Equal("application/json", captured?.Content?.Headers.ContentType?.MediaType);
+        Assert.Contains("\"environment\":\"Stadium\"", capturedBody);
+        Assert.Contains("\"decoration\":\"48x48Screen155Day\"", capturedBody);
+        Assert.Contains("\"map_type\":\"TrackMania\\\\TM_Race\"", capturedBody);
+        Assert.Contains("\"use_simple_editor\":false", capturedBody);
+    }
+
+    [Fact]
+    public async Task PlaceMapBlocksAsync_WrapsTheBlocksInABlocksArray()
+    {
+        string? capturedBody = null;
+        HttpRequestMessage? captured = null;
+        using var http = new HttpClient(new StubHandler(async (request, cancellationToken) =>
+        {
+            captured = request;
+            capturedBody = request.Content is null
+                ? null
+                : await request.Content.ReadAsStringAsync(cancellationToken);
+
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("""{"requested":1,"placed":1,"blocks":[]}""")
+            };
+        }));
+
+        var client = new OpenPlanetClient(http, "http://bridge");
+
+        var result = await client.PlaceMapBlocksAsync([new MapBlockPlacement("RoadTechStart", 24, 24)]);
+
+        Assert.True(result.Success);
+        Assert.Equal("http://bridge/map/blocks", captured?.RequestUri?.ToString());
+        Assert.Equal(
+            """{"blocks":[{"name":"RoadTechStart","x":24,"z":24,"y":-1,"dir":"North"}]}""",
+            capturedBody);
+    }
+
+    [Fact]
+    public async Task SaveMapAsAsync_PostsTheFileName()
+    {
+        string? capturedBody = null;
+        HttpRequestMessage? captured = null;
+        using var http = new HttpClient(new StubHandler(async (request, cancellationToken) =>
+        {
+            captured = request;
+            capturedBody = request.Content is null
+                ? null
+                : await request.Content.ReadAsStringAsync(cancellationToken);
+
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("""{"saved":true}""")
+            };
+        }));
+
+        var client = new OpenPlanetClient(http, "http://bridge");
+
+        var result = await client.SaveMapAsAsync("MCP/dummy.Map.Gbx");
+
+        Assert.True(result.Success);
+        Assert.Equal("http://bridge/map/save", captured?.RequestUri?.ToString());
+        Assert.Equal("""{"file_name":"MCP/dummy.Map.Gbx"}""", capturedBody);
+    }
+
+    [Fact]
+    public async Task CreateMapAsync_ReportsFailureBodyWhenTheBridgeRefuses()
+    {
+        using var http = new HttpClient(new StubHandler(_ =>
+            new HttpResponseMessage(HttpStatusCode.BadRequest)
+            {
+                Content = new StringContent("""{"error":"an editor is already open"}""")
+            }));
+
+        var client = new OpenPlanetClient(http, "http://bridge");
+
+        var result = await client.CreateMapAsync(new NewMapRequest());
+
+        Assert.False(result.Success);
+        Assert.Contains("an editor is already open", result.Body);
+    }
+
     private sealed class StubHandler : HttpMessageHandler
     {
         private readonly Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> _responseFactory;

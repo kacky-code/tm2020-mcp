@@ -1,0 +1,254 @@
+{
+  "RoadTechStart|West": [
+    "\u002BX"
+  ],
+  "RoadTechStart|North": [
+    "\u002BZ"
+  ],
+  "RoadTechSpecialTurbo2|West": [
+    "\u002BX",
+    "-X",
+    "\u002BZ"
+  ],
+  "RoadTechStart|East": [
+    "-X"
+  ],
+  "RoadTechSpecialTurbo2|East": [
+    "\u002BX",
+    "-X"
+  ],
+  "RoadTechStraight|North": [
+    "\u002BZ",
+    "-Z"
+  ],
+  "RoadTechSpecialTurbo2|South": [
+    "\u002BZ",
+    "-Z"
+  ],
+  "RoadTechStart|South": [
+    "-Z"
+  ],
+  "RoadBumpStraight|East": [
+    "\u002BX",
+    "-X"
+  ],
+  "RoadBumpCurve1|West": [
+    "\u002BX",
+    "\u002BZ"
+  ],
+  "RoadBumpStraight|South": [
+    "\u002BZ",
+    "-Z"
+  ],
+  "RoadBumpCurve1|South": [
+    "\u002BX",
+    "-Z"
+  ],
+  "RoadBumpStraight|West": [
+    "\u002BX",
+    "-X"
+  ],
+  "RoadBumpCurve1|East": [
+    "-X",
+    "-Z"
+  ],
+  "RoadBumpCurve1|North": [
+    "-X",
+    "\u002BZ"
+  ],
+  "RoadTechStraight|West": [
+    "\u002BX",
+    "-X"
+  ],
+  "RoadTechStraight|East": [
+    "\u002BX",
+    "-X"
+  ],
+  "RoadTechSpecialTurbo|West": [
+    "\u002BX",
+    "-X"
+  ],
+  "RoadIceCurve1|South": [
+    "\u002BX",
+    "-Z"
+  ],
+  "RoadIceCurve1|West": [
+    "\u002BX",
+    "\u002BZ"
+  ],
+  "RoadIceCurve1|East": [
+    "-X",
+    "-Z"
+  ],
+  "RoadIceCurve1|North": [
+    "-X",
+    "\u002BZ"
+  ],
+  "RoadIceWithWallStraight|West": [
+    "\u002BX",
+    "-X"
+  ],
+  "RoadTechCurve1|North": [
+    "-X",
+    "\u002BZ"
+  ],
+  "RoadTechCurve1|East": [
+    "-X",
+    "-Z"
+  ],
+  "RoadTechCurve1|South": [
+    "\u002BX",
+    "-Z"
+  ],
+  "RoadTechCurve1|West": [
+    "\u002BX",
+    "\u002BZ"
+  ],
+  "RoadTechFinish|North": [
+    "-Z"
+  ],
+  "RoadTechSlopeBase|East": [
+    "\u002BX",
+    "-X"
+  ],
+  "RoadTechFinish|West": [
+    "-X"
+  ],
+  "RoadTechStraight|South": [
+    "\u002BZ",
+    "-Z"
+  ],
+  "RoadTechSpecialTurbo|North": [
+    "\u002BZ",
+    "-Z"
+  ],
+  "RoadTechSpecialNoEngine|North": [
+    "\u002BZ",
+    "-Z"
+  ],
+  "RoadTechSpecialReset|West": [
+    "\u002BX",
+    "-X",
+    "\u002BZ",
+    "-Z"
+  ],
+  "RoadTechFinish|East": [
+    "\u002BX"
+  ],
+  "RoadTechBranchTShaped|North": [
+    "\u002BX",
+    "-X",
+    "\u002BZ",
+    "-Z"
+  ],
+  "RoadTechSpecialTurbo|East": [
+    "\u002BX",
+    "-X"
+  ],
+  "RoadTechRampLow|East": [
+    "\u002BX",
+    "\u002BZ",
+    "-Z"
+  ],
+  "RoadTechSpecialTurbo|South": [
+    "\u002BZ",
+    "-Z"
+  ],
+  "RoadTechSpecialTurbo2|North": [
+    "\u002BZ",
+    "-Z"
+  ],
+  "RoadTechSpecialNoEngine|South": [
+    "\u002BX",
+    "-X",
+    "\u002BZ",
+    "-Z"
+  ],
+  "RoadTechFinish|South": [
+    "\u002BZ"
+  ],
+  "RoadTechCurve2|North": [
+    "-X"
+  ],
+  "RoadTechCurve2|South": [
+    "-Z"
+  ],
+  "RoadTechCurve3|South": [
+    "-Z"
+  ],
+  "RoadBumpStraight|North": [
+    "\u002BZ",
+    "-Z"
+  ],
+  "RoadTechSpecialNoEngine|West": [
+    "\u002BX",
+    "-X"
+  ],
+  "RoadWaterStraight|East": [
+    "\u002BX",
+    "-X"
+  ],
+  "RoadDirtStraight|East": [
+    "\u002BX",
+    "-X"
+  ],
+  "RoadTechSpecialNoEngine|East": [
+    "\u002BX",
+    "-X",
+    "\u002BZ"
+  ],
+  "RoadTechSpecialReset|East": [
+    "\u002BX",
+    "-X"
+  ],
+  "RoadWaterCurve1|North": [
+    "-X",
+    "\u002BZ"
+  ],
+  "RoadWaterCurve1|South": [
+    "\u002BX",
+    "-Z"
+  ],
+  "RoadWaterCurve1|West": [
+    "\u002BX",
+    "\u002BZ"
+  ],
+  "RoadWaterCurve1|East": [
+    "-X",
+    "-Z"
+  ],
+  "RoadTechSpecialReset|South": [
+    "\u002BZ",
+    "-Z"
+  ],
+  "RoadWaterStraight|West": [
+    "\u002BX",
+    "-X"
+  ],
+  "RoadTechSpecialReset|North": [
+    "\u002BX",
+    "-X",
+    "\u002BZ",
+    "-Z"
+  ],
+  "RoadWaterStraight|South": [
+    "\u002BZ",
+    "-Z"
+  ],
+  "RoadWaterStraight|North": [
+    "\u002BZ",
+    "-Z"
+  ],
+  "RoadTechSpecialNoEngineSlope|East": [
+    "-X"
+  ],
+  "RoadTechSpecialNoEngineSlope|South": [
+    "-Z"
+  ],
+  "RoadTechSpecialNoEngineSlope|West": [
+    "\u002BX"
+  ],
+  "RoadTechSpecialNoEngineSlope|North": [
+    "\u002BZ"
+  ]
+}
