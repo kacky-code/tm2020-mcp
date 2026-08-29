@@ -1,0 +1,25 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html", "x": 0, "y": 0, "w": 1040, "h": 1160, "title": "1 · Route plan" },
+    { "file": "HeightProfile.dc.html", "x": 1140, "y": 0, "w": 760, "h": 1160, "title": "2 · Height profile" },
+    { "file": "Palette.dc.html", "x": 0, "y": 1300, "w": 940, "h": 820, "title": "3 · Block palette" },
+    { "file": "Rules.dc.html", "x": 1040, "y": 1300, "w": 940, "h": 820, "title": "4 · Connection rules" }
+  ],
+  "annotations": [
+    {
+      "id": "measured-vs-proposed",
+      "x": 0,
+      "y": -170,
+      "w": 520,
+      "text": "Cyan is measured — parsed out of 450 Kacky Reloaded maps and Deep Dip 1/2 with GBX.NET, with the sample size shown.\nAmber is proposed or unverified — the route sections, and anything nothing in the toolchain can check.\n\nThe blueprint never mixes the two."
+    },
+    {
+      "id": "open-question",
+      "x": 1140,
+      "y": -170,
+      "w": 440,
+      "text": "Open: sheet 1 is a flat, single-level road track. Kacky is a jump gauntlet built from platform blocks placed off-grid.\n\nSheet 2 is why that gap exists; sheet 3 is how far the palette reaches."
+    }
+  ],
+  "launch": { "view": "canvas" }
+}
