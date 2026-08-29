@@ -1,6 +1,7 @@
 # Handoff: settle five map-editor facts with the bridge
 
-Status: not started. Created 2026-08-28. No owner.
+Status: **E2, E4 and E5 answered against a running client on 2026-08-29** — see "Answers"
+below. E1 and E3 still open. Created 2026-08-28.
 
 ## Why this exists
 
@@ -22,6 +23,45 @@ ManiaLink questions, so MLHook has nothing to say about them and is not an alter
 | E4 | Does the engine clear block units on delete? | `BlockUnitsE.Length` and `BlockUnits.Length` on a held handle after `RemoveBlock` | PuzzleMode currently uses `BlockUnitsE.Length == 0` as its deleted-test. Confirm or kill it |
 | E5 | Does `GetBlock(coord)` identity flip after a delete? | hold handle, `RemoveBlock(coord)`, then `GetBlock(coord)` | null or a different handle confirms the O(1) liveness check we recommended |
 
+## Answers
+
+Run on 2026-08-29 through `POST /map/blocks/remove` with `"probe": true` (the bridge holds the
+block handle, removes the block, then reads the handle back). Scratch map, a `RoadTechStraight`
+placed at `<40, 9, 40>` and removed:
+
+```json
+{"removed": true, "block_info_null": false,
+ "probe": {"get_block_null": false, "same_handle": false,
+           "held_units_e": 1, "held_units": 1, "held_info_null": false}}
+```
+
+**E4 — the engine does NOT clear block units on delete. Kill the deleted-test.**
+`BlockUnitsE.Length` and `BlockUnits.Length` were both **1** on the handle *after* a successful
+`RemoveBlock`, and `BlockInfo` was still non-null on it. PuzzleMode's `BlockUnitsE.Length == 0`
+test would report a deleted block as alive. This was the one the handoff asked to "confirm or
+kill", and it is killed.
+
+**E5 — identity flips, but the coordinate is not empty.** `GetBlock` afterwards returned a
+block that was **not** the held handle (`same_handle: false`), so an identity check is sound.
+But it was **not null**: at ground level the cell still holds the terrain block. Two follow-ups
+confirmed why — removing at the same coordinate again returned a different block (`#37827`)
+that `RemoveBlock` refuses, and a never-touched cell `<44, 9, 44>` behaved identically
+(`#38023`, refused). Ground cells always hold something.
+
+So the O(1) liveness check must **compare handles, not test for null**. A null test passes
+silently at ground level and would never fire.
+
+**E2 — `BlockInfo` was non-null** on every block observed: the placed block, the deleted
+handle, and both terrain blocks. That is evidence over one session, not the full-session soak
+the question asks for, so the null guards are not yet proven dead weight.
+
+One incidental finding: `block.IdName` is an internal numeric id (`#38241`), not the model
+name. The readable name is on `BlockInfo.IdName`.
+
+**Not answered: mid-air removal.** Every observation above is at ground level, where the
+terrain layer is what makes `GetBlock` non-null. Whether `GetBlock` returns null after removing
+a block placed in the air is untested.
+
 E1 to E3 are read-only. **E4 and E5 place and delete blocks, so run them on a scratch map.**
 
 Same asymmetry applies throughout: items have no coord lookup and no handle-based removal
@@ -30,9 +70,12 @@ E4 and E5 are block-only by construction.
 
 ## What the bridge does today
 
-Nothing that touches the map. `openplanet-plugin/TM2020Bridge/Main.as` serves eight endpoints and
-all of them are status, save, or ManiaLink. This is a new direction, not a config change. The
-whole of `WAYFINDER-MAP.md` is ManiaLink readback and does not cover it.
+**This section is out of date as of 2026-08-29.** It read: "Nothing that touches the map …
+This is a new direction, not a config change." The bridge now creates maps (`/map/new`), places
+and removes blocks (`/map/blocks`, `/map/blocks/remove`), saves (`/map/save`) and opens
+(`/map/open`) them, so a scratch map for E4 and E5 is one call, and the probe those questions
+need is already built. `WAYFINDER-MAP.md` is still ManiaLink readback and still does not cover
+this.
 
 The hard constraint: AngelScript compiles at plugin load, so there is no eval. An agent cannot
 post a snippet and get an answer. Anything the bridge answers has to be a fixed endpoint written

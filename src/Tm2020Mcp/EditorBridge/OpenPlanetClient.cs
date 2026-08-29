@@ -69,6 +69,20 @@ public sealed class OpenPlanetClient
         return await PostAsync("/map/blocks", content, cancellationToken);
     }
 
+    /// <param name="probe">
+    /// Ask the bridge to read engine state off a block handle it has just deleted. That is a
+    /// deliberate experiment, not a default: reading a freed handle is exactly the question
+    /// being asked, and it could take the client down.
+    /// </param>
+    public async Task<OpenPlanetResult> RemoveMapBlocksAsync(
+        IReadOnlyList<MapBlockRemoval> blocks,
+        bool probe = false,
+        CancellationToken cancellationToken = default)
+    {
+        using var content = JsonContent.Create(new RemoveBlocksRequest(blocks, probe), options: JsonOptions);
+        return await PostAsync("/map/blocks/remove", content, cancellationToken);
+    }
+
     public async Task<OpenPlanetResult> SaveMapAsAsync(string fileName, CancellationToken cancellationToken = default)
     {
         using var content = JsonContent.Create(new SaveMapRequest(fileName), options: JsonOptions);
@@ -153,6 +167,10 @@ public sealed class OpenPlanetClient
 
     private sealed record MapBlocksRequest(
         [property: JsonPropertyName("blocks")] IReadOnlyList<MapBlockPlacement> Blocks);
+
+    private sealed record RemoveBlocksRequest(
+        [property: JsonPropertyName("blocks")] IReadOnlyList<MapBlockRemoval> Blocks,
+        [property: JsonPropertyName("probe")] bool Probe);
 
     private sealed record SaveMapRequest(
         [property: JsonPropertyName("file_name")] string FileName);
