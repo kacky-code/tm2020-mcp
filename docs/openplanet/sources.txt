@@ -4,3 +4,7 @@ https://next.openplanet.dev/Game/CGameScriptHandlerBrowser
 https://next.openplanet.dev/Game/CGameEditorPluginMap
 https://next.openplanet.dev/Game/CGameManiaplanetPlugin
 https://doc.maniaplanet.com/manialink/getting-started
+https://next.openplanet.dev/Game/CGameManiaTitleControlScriptAPI
+https://www.angelcode.com/angelscript/sdk/docs/manual/doc_script.html
+https://www.angelcode.com/angelscript/sdk/docs/manual/doc_script_handle.html
+https://www.angelcode.com/angelscript/sdk/docs/manual/doc_script_func_ref.html

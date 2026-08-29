@@ -9,3 +9,15 @@ obj/
 TestResults/
 docs/openplanet/raw/
 var/
+
+# Local map corpora used for grid analysis; keep the binaries out of git.
+*.Map.Gbx
+*.Map.Gbx.zip
+Summer_*/
+Spring_*/
+Summer_*.zip
+Spring_*.zip
+
+# Assembled design-canvas payload: ~2 MB of editor code, regenerated from the
+# .dc.html sources beside it. See docs/blueprint/README.md.
+docs/blueprint/kacky-map-blueprint.html

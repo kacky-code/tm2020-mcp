@@ -1,6 +1,6 @@
 # Openplanet Docs Cache
 
-Last reviewed: 2026-06-06
+Last reviewed: 2026-08-28
 
 This directory is a curated local cache for agent-readable Openplanet and ManiaLink
 reference notes. It is not a full mirror of `next.openplanet.dev`.
@@ -16,6 +16,8 @@ implementing unfamiliar or risky API usage.
 | [Game.CGameScriptHandlerPlaygroundInterface.md](Game.CGameScriptHandlerPlaygroundInterface.md) | https://next.openplanet.dev/Game/CGameScriptHandlerPlaygroundInterface | In-game ManiaLink handler surface for events, profile/spectate actions, UI sounds, and video/audio manager access. |
 | [Game.CGameScriptHandlerBrowser.md](Game.CGameScriptHandlerBrowser.md) | https://next.openplanet.dev/Game/CGameScriptHandlerBrowser | Manialink browser handler surface; useful for browser navigation and inherited ManiaLink event APIs. |
 | [Game.CGameEditorPluginMap.md](Game.CGameEditorPluginMap.md) | https://next.openplanet.dev/Game/CGameEditorPluginMap | Map editor plugin surface; includes `ManialinkText`, `ManialinkPage`, editor state, and inherited ManiaApp APIs. |
+| [Game.CGameManiaTitleControlScriptAPI.md](Game.CGameManiaTitleControlScriptAPI.md) | https://next.openplanet.dev/Game/CGameManiaTitleControlScriptAPI | Title-layer API that opens the editor; `EditNewMap2` is how `create_map` starts a map. |
+| [angelscript-language.md](angelscript-language.md) | https://www.angelcode.com/angelscript/sdk/docs/manual/doc_script.html | AngelScript language rules for the one file `dotnet build` cannot check: handles, `is`/`!is`, `&in`/`&out`, nested enums, and the Openplanet-only additions. |
 | [Game.CGameManiaplanetPlugin.md](Game.CGameManiaplanetPlugin.md) | https://next.openplanet.dev/Game/CGameManiaplanetPlugin | OpenPlanet plugin context surface with current server/map/player state and inherited ManiaApp APIs. |
 | [manialink-elements.md](manialink-elements.md) | https://doc.maniaplanet.com/manialink/getting-started | Practical ManiaLink XML tag notes for frames, quads, labels, audio/music, and paste-safe Interface Designer fragments. |
 

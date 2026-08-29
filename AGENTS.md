@@ -43,6 +43,15 @@ local inspection, prototyping, validation, or debugging around the game client/e
   `ManialinkMediaProbe.cs` answers the media questions the engine will not: a real client reports
   no usable image load state, so reachability and WebP animation are settled by fetching the URL.
   Keep it client-free; it must never require a running game or the bridge.
+- `src/Tm2020Mcp/Maps/` builds block layouts for the map editor and reads saved maps with
+  GBX.NET. Keep the reader client-free like `ManialinkMediaProbe`: it must never require a
+  running game or the bridge, which is what makes it usable as an oracle for what the editor
+  produced. `MapBlock` deliberately flattens the GBX.NET types so the analysis and the track
+  verifier can be tested without map files, and no corpus is committed. The grid conventions it
+  relies on (direction-to-axis mapping, ground level, block names) are measured from real
+  maps and recorded in `docs/tm2020-map-geometry.md`. Change a convention there, not in the
+  builder, and re-measure rather than reason about it: `PlaceBlock` reports whether a block
+  fits, never whether the road connects, so a reversed track looks like a clean success.
 - `examples/` stores small reusable XML fragments.
 - `docs/openplanet/` stores curated API notes with upstream URLs.
 

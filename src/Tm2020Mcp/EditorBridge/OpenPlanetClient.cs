@@ -57,6 +57,24 @@ public sealed class OpenPlanetClient
         return await PostAsync("/save", content: null, cancellationToken);
     }
 
+    public async Task<OpenPlanetResult> CreateMapAsync(NewMapRequest request, CancellationToken cancellationToken = default)
+    {
+        using var content = JsonContent.Create(request, options: JsonOptions);
+        return await PostAsync("/map/new", content, cancellationToken);
+    }
+
+    public async Task<OpenPlanetResult> PlaceMapBlocksAsync(IReadOnlyList<MapBlockPlacement> blocks, CancellationToken cancellationToken = default)
+    {
+        using var content = JsonContent.Create(new MapBlocksRequest(blocks), options: JsonOptions);
+        return await PostAsync("/map/blocks", content, cancellationToken);
+    }
+
+    public async Task<OpenPlanetResult> SaveMapAsAsync(string fileName, CancellationToken cancellationToken = default)
+    {
+        using var content = JsonContent.Create(new SaveMapRequest(fileName), options: JsonOptions);
+        return await PostAsync("/map/save", content, cancellationToken);
+    }
+
     public async Task<OpenPlanetResult> PreviewManialinkXmlAsync(string xml, CancellationToken cancellationToken = default)
     {
         using var content = new StringContent(xml, Encoding.UTF8, "application/xml");
@@ -132,6 +150,12 @@ public sealed class OpenPlanetClient
                 ManialinkPreview);
         }
     }
+
+    private sealed record MapBlocksRequest(
+        [property: JsonPropertyName("blocks")] IReadOnlyList<MapBlockPlacement> Blocks);
+
+    private sealed record SaveMapRequest(
+        [property: JsonPropertyName("file_name")] string FileName);
 
     private sealed record ManialinkEventsDto(
         [property: JsonPropertyName("events")] IReadOnlyList<ManialinkEventDto> Events);

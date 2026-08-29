@@ -14,6 +14,12 @@ The project has two pieces:
 - Preview ManiaLink XML from a local file.
 - Clear the current ManiaLink preview.
 - Trigger map-editor autosave.
+- Create a new map in the editor, place a minimal start/straight/finish track in it, and save
+  it to disk (`create_map`). Needs the game at the main menu with no editor open.
+- Read saved maps straight off disk with GBX.NET, with no running game: list a map's blocks
+  (`inspect_map_gbx`), derive what a block direction means in world coordinates by counting
+  neighbours across a corpus (`analyze_map_block_directions`), and walk a track from its start
+  block to check the road actually connects (`verify_map_track`).
 - Detect whether the map editor, Interface Designer, or module editor is active.
 - Validate ManiaLink XML against Trackmania 2020 constraints before pushing it into the game (`validate_manialink_xml`, `validate_manialink_file`). Checks the v3 dialect, element names, media formats the client can actually decode, the 320x180 coordinate space, script-event wiring, duplicate ids, and Interface Designer paste-safety. Rules and their evidence: [`docs/manialink-tm2020.md`](docs/manialink-tm2020.md).
 - Fetch every http(s) media URL in ManiaLink XML and report what the game will silently fail to render (`check_manialink_media`): dead URLs, non-200s, a web page served where a media file was expected, and animated WebP confirmed from its VP8X header. Needs no running game.
@@ -111,17 +117,26 @@ dotnet build
 
 ### 7. Point your MCP client at it
 
-For Claude Code:
-
-```powershell
-claude mcp add tm2020 -- dotnet run --project C:\path\to\tm2020-mcp\src\Tm2020Mcp\Tm2020Mcp.csproj --no-build
-```
+**Claude Code needs no setup.** The repo ships a `.mcp.json` with a path relative to the checkout,
+so the server is registered as soon as you start Claude Code from the repo root. Approve it when
+prompted, and check it with `/mcp`.
 
 For a client that takes JSON config, see [Run Native .NET](#run-native-net) below. The server
 reads `TM2020_BRIDGE_URL` and defaults to `http://127.0.0.1:29100`, so it needs no configuration
 when the game runs on the same machine.
 
-`--no-build` means step 6 has to have run first.
+If you register the server by hand instead, **substitute your own checkout path** — the paths in
+this README are placeholders, not literals:
+
+```powershell
+claude mcp add tm2020 -- dotnet run --project $PWD\src\Tm2020Mcp\Tm2020Mcp.csproj
+```
+
+A registration pointing at a path that does not exist fails as `-32000` at connect time, which
+reads like a server crash rather than a typo.
+
+Adding `--no-build` skips the rebuild and starts faster, but then step 6 has to have run first,
+and any later C# change is ignored until you rebuild. `.mcp.json` omits it for that reason.
 
 ### 8. Check it end to end
 
@@ -234,7 +249,9 @@ TM2020_BRIDGE_URL=http://127.0.0.1:29100 \
 dotnet run --project src/Tm2020Mcp/Tm2020Mcp.csproj
 ```
 
-Example MCP config for a native install:
+Example MCP config for a native install. Replace `/path/to/tm2020-mcp` with your actual checkout
+path — a config pointing at a nonexistent project fails at connect time with a generic transport
+error (`-32000` in Claude Code) that looks like a server crash:
 
 ```json
 {
@@ -244,15 +261,14 @@ Example MCP config for a native install:
       "args": [
         "run",
         "--project",
-        "/path/to/tm2020-mcp/src/Tm2020Mcp/Tm2020Mcp.csproj",
-        "--no-build"
+        "/path/to/tm2020-mcp/src/Tm2020Mcp/Tm2020Mcp.csproj"
       ]
     }
   }
 }
 ```
 
-For Windows, use your local checkout path:
+On Windows the path needs escaped backslashes, again substituting your own checkout:
 
 ```json
 {
@@ -262,13 +278,15 @@ For Windows, use your local checkout path:
       "args": [
         "run",
         "--project",
-        "C:\\path\\to\\tm2020-mcp\\src\\Tm2020Mcp\\Tm2020Mcp.csproj",
-        "--no-build"
+        "C:\\Users\\you\\code\\tm2020-mcp\\src\\Tm2020Mcp\\Tm2020Mcp.csproj"
       ]
     }
   }
 }
 ```
+
+Clients that launch the server with the repo as its working directory can use the relative path
+`src/Tm2020Mcp/Tm2020Mcp.csproj` and skip the substitution entirely, as `.mcp.json` does.
 
 ## Run With Docker
 
@@ -335,6 +353,34 @@ On Linux, `host.docker.internal` may require host-gateway mapping:
 - `preview_manialink_file(path)` - read an XML file from disk and preview it.
 - `clear_manialink_preview()` - clear the current preview.
 - `autosave_map_editor()` - trigger map-editor autosave.
+- `create_map(saveAs?, withTrack?, straightCount?, direction?, originX?, originZ?,
+  environment?, decoration?, mapType?, waitSeconds?)` - open the editor on a brand new map,
+  optionally lay a track, optionally save it. Pass `routeLength` to place a generated turning
+  route instead of the straight three-block one. Refuses to run while any
+  editor is open so it cannot discard unsaved work. `saveAs` is relative to the user Maps
+  folder and may name a subfolder: `"MCP/dummy.Map.Gbx"` writes
+  `Documents/Trackmania/Maps/MCP/dummy.Map.Gbx`. The map's internal name stays `Unnamed`.
+- `inspect_map_gbx(path, nameFilter?, limit?)` - list the blocks of a `.Map.Gbx` with
+  coordinates and directions. Free blocks are marked; they carry a rotation, not a grid
+  direction.
+- `analyze_map_block_directions(path, nameFilter?, minimumSamples?)` - point at a map or a
+  directory and get, per block and direction, which neighbouring cell holds a connected
+  block. This is how the direction table in `docs/tm2020-map-geometry.md` was derived.
+- `verify_map_track(path)` - walk a saved map from its start block and report whether the
+  road connects to the finish.
+- `generate_track_plan(seed?, length?, turnChance?, originX?, originZ?, direction?, style?)` -
+  generate a connected, turning route from block shapes learned out of real maps, verified
+  before it touches the game. `style: "tricks"` mixes in turbo, no-engine, reset and
+  ice/bump/water/dirt surfaces; `"plain"` stays on tech road.
+- `learn_map_block_connections(path, outputPath?, minimumSamples?, namePrefix?, variant?)` -
+  relearn the block-shape model from a corpus of maps.
+- `learn_map_motif(path, anchor, radius?, threshold?, outputPath?, excludePrefixes?)` - measure
+  a multi-block structure, such as a loop or a reset-gate run, from the maps around it.
+- `stamp_map_motif(motifPath, x, z, y?, direction?, minimumSupport?, dryRun?)` - place a learned
+  motif into the open editor, rotated, after checking the whole footprint for collisions.
+- `write_free_blocks(sourcePath, outputPath, blocksJson, cells?)` - write free blocks into a
+  copy of a map at explicit world positions and rotations, with no game running. This places
+  geometry the editor plugin API cannot express at all.
 - `get_recent_manialink_events()` - show recent ManiaLink event payloads recorded by the bridge.
 - `record_manialink_event(body)` - manually record an event payload in the bridge buffer.
 - `clear_manialink_events()` - clear the bridge event buffer.
@@ -345,6 +391,58 @@ On Linux, `host.docker.internal` may require host-gateway mapping:
   XML fragment for one EmojiChat line.
 - `build_manialink_video_probe_xml(data, music?, play?, hidden?)` - generate a small
   ManiaLink document with a `<video>` tag for GPS/video experiments.
+
+## Map Analysis
+
+The map tools read `.Map.Gbx` files directly through [GBX.NET](https://github.com/BigBang1112/gbx-net)
+and need neither the game nor the bridge. They exist because the editor API cannot answer the
+question that matters: `PlaceBlock` reports whether a block *fits in a cell*, never whether the
+road *connects*. A track laid in the wrong direction places cleanly and reports nothing but
+successes.
+
+```text
+verify_map_track("C:/Users/you/Documents/Trackmania/Maps/MCP/dummy.Map.Gbx")
+
+NOT connected: RoadTechStart <24, 9, 24> dir=North points +Z but (24, 9, 25) is empty.
+A start block facing away from its own track looks exactly like this.
+```
+
+Generation runs off the same evidence. `BlockConnectionModel` learns each block's *shape* -
+one open side for a start, two opposite for a straight, two perpendicular for a curve - by
+counting neighbours, and `generate_track_plan` chains blocks whose shapes fit. A generated
+route is verified before anything is placed:
+
+```text
+generate_track_plan(seed: 183, length: 60)
+62 blocks, finish=True, verified=True
+```
+
+That route placed 62/62 through the bridge and verified connected when parsed back off disk.
+It connects and ends properly; it is not a good track, and it is not a Kacky map. Those are
+jump gauntlets, and judging a jump needs a car model this repo does not have. See the corpus
+numbers in the geometry doc.
+
+`analyze_map_block_directions` is the tool that settles conventions rather than guessing them.
+Pointed at a directory of maps, it counts which neighbouring cell holds a connected block for
+every (block, direction) pair. A start or finish has one road exit, so it yields a forward
+vector with its sign; a symmetric straight yields only an axis and is reported without a
+verdict. Results and method: [`docs/tm2020-map-geometry.md`](docs/tm2020-map-geometry.md).
+
+The editor plugin API is grid-only: every placement method takes an `int3` coordinate and a
+cardinal direction. Roughly half the blocks in a map like Deep Dip are placed off that grid at
+arbitrary angles, so the bridge can never build one. `write_free_blocks` goes around that by
+editing the `.Map.Gbx` directly - positions in world units, rotations in degrees, no grid
+involved. Note that parsing a written file back is not proof the game accepts it; open the map
+to confirm.
+
+Some things in Trackmania are a shape, not a block. A loop is a five-wide wall of
+`PlatformTechLoopStart` over a base row; a reset is a run of two or three `GateSpecialReset`.
+`learn_map_motif` measures those structures from real maps and `stamp_map_motif` places them
+whole, rotated, refusing to half-build one. Note that the engine's own `DecoWall*` and
+`Structure*` blocks cannot be stamped back - they are generated, not authored - so motifs
+exclude them by default.
+
+Local map corpora are gitignored. Keep them outside the repo or in an ignored folder.
 
 ## Interface Designer Fragments
 
@@ -471,6 +569,26 @@ Show status:
 curl -4 -sS --max-time 3 http://127.0.0.1:29100/status
 ```
 
+Create a new map, then give it a track and a file name:
+
+```bash
+curl -4 -sS --max-time 10 \
+  -H 'Content-Type: application/json' \
+  --data '{"environment":"Stadium","decoration":"48x48Screen155Day","map_type":"TrackMania\\TM_Race"}' \
+  http://127.0.0.1:29100/map/new
+
+# once /status reports map_editor=true. A negative y means "find the ground for me".
+curl -4 -sS --max-time 10 \
+  -H 'Content-Type: application/json' \
+  --data '{"blocks":[{"name":"RoadTechStart","x":24,"y":-1,"z":24,"dir":"North"}]}' \
+  http://127.0.0.1:29100/map/blocks
+
+curl -4 -sS --max-time 10 \
+  -H 'Content-Type: application/json' \
+  --data '{"file_name":"MCP/dummy.Map.Gbx"}' \
+  http://127.0.0.1:29100/map/save
+```
+
 Preview an XML file:
 
 ```bash
@@ -539,6 +657,10 @@ docs/openplanet/
 
 These files are intentionally small, agent-readable summaries with source URLs. They are
 not a full mirror of the Openplanet docs.
+
+[`docs/tm2020-map-geometry.md`](docs/tm2020-map-geometry.md) is the matching reference for the
+block grid: what a block `direction` means in world coordinates, where ground level is, and
+which claims came from parsing 450 real maps with GBX.NET rather than from the editor API.
 
 ## Notes
 

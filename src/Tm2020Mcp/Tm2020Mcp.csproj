@@ -8,6 +8,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Maps/block-connections.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="GBX.NET" Version="2.4.4" />
+    <PackageReference Include="GBX.NET.LZO" Version="2.1.6" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.5" />
     <PackageReference Include="ModelContextProtocol" Version="1.2.0" />
   </ItemGroup>

@@ -3,6 +3,10 @@
 // Endpoints:
 //   GET  /status
 //   POST /save
+//   POST /map/new
+//   POST /map/blocks
+//   POST /map/save
+//   POST /map/open
 //   POST /manialink/preview
 //   POST /manialink/clear
 //   GET  /manialink/current
@@ -103,6 +107,69 @@ void HandleClient(Net::Socket@ client)
             responseBody = '{"saved":true}';
             status = 200;
             print("TM2020Bridge: map editor autosave triggered");
+        }
+        else
+        {
+            responseBody = '{"error":"' + JsonEscape(err) + '"}';
+            status = 400;
+        }
+    }
+    else if (method == "POST" && path == "/map/new")
+    {
+        string summary = "";
+        string err = CreateNewMap(body, summary);
+        if (err.Length == 0)
+        {
+            responseBody = summary;
+            status = 200;
+            print("TM2020Bridge: new map requested");
+        }
+        else
+        {
+            responseBody = '{"error":"' + JsonEscape(err) + '"}';
+            status = 400;
+        }
+    }
+    else if (method == "POST" && path == "/map/blocks")
+    {
+        string summary = "";
+        string err = PlaceMapBlocks(body, summary);
+        if (err.Length == 0)
+        {
+            responseBody = summary;
+            status = 200;
+        }
+        else
+        {
+            responseBody = '{"error":"' + JsonEscape(err) + '"}';
+            status = 400;
+        }
+    }
+    else if (method == "POST" && path == "/map/save")
+    {
+        string summary = "";
+        string err = SaveMapAs(body, summary);
+        if (err.Length == 0)
+        {
+            responseBody = summary;
+            status = 200;
+            print("TM2020Bridge: map saved");
+        }
+        else
+        {
+            responseBody = '{"error":"' + JsonEscape(err) + '"}';
+            status = 400;
+        }
+    }
+    else if (method == "POST" && path == "/map/open")
+    {
+        string summary = "";
+        string err = OpenMapInEditor(body, summary);
+        if (err.Length == 0)
+        {
+            responseBody = summary;
+            status = 200;
+            print("TM2020Bridge: opening map in editor");
         }
         else
         {
@@ -290,6 +357,329 @@ string AutosaveMapEditor()
     return "";
 }
 
+// Map creation / editing -------------------------------------------------------
+
+// Defaults match a plain TM2020 Stadium map. They are request fields, not constants baked
+// into the endpoint, so a caller can correct one without a plugin reload.
+const string DefaultEnvironment = "Stadium";
+const string DefaultDecoration = "48x48Screen155Day";
+const string DefaultMapType = "TrackMania\\TM_Race";
+
+// The editor loads asynchronously, so /map/new returns before it is necessarily up.
+// Wait only briefly here and let the caller poll /status for the rest.
+const int NewMapEditorWaitFrames = 120;
+
+// Height range scanned when a block placement asks for an automatic ground level.
+const int MaxGroundScanY = 40;
+
+// SaveMap is asynchronous too. Stay under the .NET client's 5s HTTP timeout.
+const int SaveMapWaitFrames = 180;
+
+string CreateNewMap(const string &in body, string &out summary)
+{
+    summary = "";
+
+    if (GetApp().Editor !is null || GetApp().EditorBase !is null)
+        return "an editor is already open; leave it before creating a new map";
+
+    auto app = cast<CGameManiaPlanet>(GetApp());
+    if (app is null)
+        return "app is not a ManiaPlanet-derived app";
+
+    auto titleApi = app.ManiaTitleControlScriptAPI;
+    if (titleApi is null)
+        return "ManiaTitleControlScriptAPI not available";
+
+    auto options = ParseJsonObject(body);
+    string environment = JsonString(options, "environment", DefaultEnvironment);
+    string decoration = JsonString(options, "decoration", DefaultDecoration);
+    string mapType = JsonString(options, "map_type", DefaultMapType);
+    string mod = JsonString(options, "mod", "");
+    string playerModel = JsonString(options, "player_model", "");
+    bool simpleEditor = JsonBool(options, "use_simple_editor", false);
+
+    titleApi.EditNewMap2(environment, decoration, mod, playerModel, mapType, simpleEditor, "", "");
+
+    int waited = WaitForMapEditor(NewMapEditorWaitFrames);
+    bool editorOpen = (cast<CGameCtnEditorFree>(GetApp().Editor) !is null);
+
+    summary = '{"created":true'
+        + ',"map_editor":' + (editorOpen ? 'true' : 'false')
+        + ',"environment":"' + JsonEscape(environment) + '"'
+        + ',"decoration":"' + JsonEscape(decoration) + '"'
+        + ',"map_type":"' + JsonEscape(mapType) + '"'
+        + ',"waited_frames":' + waited
+        + '}';
+
+    return "";
+}
+
+int WaitForMapEditor(int maxFrames)
+{
+    int waited = 0;
+    while (waited < maxFrames && cast<CGameCtnEditorFree>(GetApp().Editor) is null)
+    {
+        waited++;
+        yield();
+    }
+
+    return waited;
+}
+
+int WaitForMapFileName(CGameEditorPluginMap@ pmt, int maxFrames)
+{
+    int waited = 0;
+    while (waited < maxFrames && ToJsonString(pmt.MapFileName).Length == 0)
+    {
+        waited++;
+        yield();
+    }
+
+    return waited;
+}
+
+string PlaceMapBlocks(const string &in body, string &out summary)
+{
+    summary = "";
+
+    auto editor = cast<CGameCtnEditorFree>(GetApp().Editor);
+    if (editor is null)
+        return "map editor not open";
+
+    auto pmt = editor.PluginMapType;
+    if (pmt is null)
+        return "PluginMapType not available";
+
+    auto options = ParseJsonObject(body);
+    if (options is null || !options.HasKey("blocks"))
+        return "request body needs a \"blocks\" array";
+
+    auto blocks = options["blocks"];
+    if (blocks is null || blocks.GetType() != Json::Type::Array)
+        return "\"blocks\" must be an array";
+
+    string results = "";
+    int placedCount = 0;
+
+    for (int i = 0; i < int(blocks.Length); i++)
+    {
+        auto entry = blocks[i];
+        string name = JsonString(entry, "name", "");
+        int x = JsonInt(entry, "x", 0);
+        int y = JsonInt(entry, "y", -1);
+        int z = JsonInt(entry, "z", 0);
+        string dirName = JsonString(entry, "dir", "North");
+
+        bool knownDir = false;
+        auto dir = CardinalDirectionFromName(dirName, knownDir);
+
+        string failure = "";
+        int resolvedY = y;
+        bool placed = false;
+
+        if (name.Length == 0)
+        {
+            failure = "block name missing";
+        }
+        else if (!knownDir)
+        {
+            failure = "unknown direction: " + dirName;
+        }
+        else
+        {
+            auto model = pmt.GetBlockModelFromName(name);
+            if (model is null)
+            {
+                failure = "unknown block model";
+            }
+            else
+            {
+                if (resolvedY < 0)
+                    resolvedY = FindGroundY(pmt, model, x, z, dir);
+
+                if (resolvedY < 0)
+                    failure = "no placeable ground level found at this x/z";
+                else if (!pmt.PlaceBlock(model, int3(x, resolvedY, z), dir))
+                    failure = "PlaceBlock refused this coordinate";
+                else
+                    placed = true;
+            }
+        }
+
+        if (placed)
+            placedCount++;
+
+        if (results.Length > 0)
+            results += ',';
+
+        results += '{"name":"' + JsonEscape(name) + '"'
+            + ',"placed":' + (placed ? 'true' : 'false')
+            + ',"x":' + x + ',"y":' + resolvedY + ',"z":' + z
+            + ',"dir":"' + JsonEscape(dirName) + '"'
+            + ',"error":"' + JsonEscape(failure) + '"}';
+    }
+
+    summary = '{"requested":' + blocks.Length + ',"placed":' + placedCount + ',"blocks":[' + results + ']}';
+    return "";
+}
+
+int FindGroundY(CGameEditorPluginMap@ pmt, CGameCtnBlockInfo@ model, int x, int z, CGameEditorPluginMap::ECardinalDirections dir)
+{
+    for (int y = 0; y < MaxGroundScanY; y++)
+    {
+        if (pmt.CanPlaceBlock(model, int3(x, y, z), dir, true, 0))
+            return y;
+    }
+
+    return -1;
+}
+
+CGameEditorPluginMap::ECardinalDirections CardinalDirectionFromName(const string &in name, bool &out known)
+{
+    known = true;
+
+    string lowered = ToLowerAscii(name);
+    if (lowered == "" || lowered == "north")
+        return CGameEditorPluginMap::ECardinalDirections::North;
+    if (lowered == "east")
+        return CGameEditorPluginMap::ECardinalDirections::East;
+    if (lowered == "south")
+        return CGameEditorPluginMap::ECardinalDirections::South;
+    if (lowered == "west")
+        return CGameEditorPluginMap::ECardinalDirections::West;
+
+    known = false;
+    return CGameEditorPluginMap::ECardinalDirections::North;
+}
+
+string SaveMapAs(const string &in body, string &out summary)
+{
+    summary = "";
+
+    auto editor = cast<CGameCtnEditorFree>(GetApp().Editor);
+    if (editor is null)
+        return "map editor not open";
+
+    auto pmt = editor.PluginMapType;
+    if (pmt is null)
+        return "PluginMapType not available";
+
+    auto options = ParseJsonObject(body);
+    string fileName = JsonString(options, "file_name", "");
+    if (fileName.Length == 0)
+        return "request body needs a non-empty \"file_name\"";
+
+    // SaveMap returns void and finishes asynchronously, so the call returning proves
+    // nothing. Wait for the editor to report a file name and answer with that instead.
+    pmt.SaveMap(fileName);
+
+    int waited = WaitForMapFileName(pmt, SaveMapWaitFrames);
+    string savedFileName = ToJsonString(pmt.MapFileName);
+
+    summary = '{"saved":' + (savedFileName.Length > 0 ? 'true' : 'false')
+        + ',"requested_file_name":"' + JsonEscape(fileName) + '"'
+        + ',"map_name":"' + JsonEscape(ToJsonString(pmt.MapName)) + '"'
+        + ',"map_file_name":"' + JsonEscape(savedFileName) + '"'
+        + ',"waited_frames":' + waited
+        + '}';
+
+    return "";
+}
+
+// Opens a map that already exists on disk. This is how a map written outside the game -
+// by the .Map.Gbx writer, which can place free blocks the editor API cannot - gets loaded
+// back in to be looked at.
+string OpenMapInEditor(const string &in body, string &out summary)
+{
+    summary = "";
+
+    if (GetApp().Editor !is null || GetApp().EditorBase !is null)
+        return "an editor is already open; leave it before opening another map";
+
+    auto app = cast<CGameManiaPlanet>(GetApp());
+    if (app is null)
+        return "app is not a ManiaPlanet-derived app";
+
+    auto titleApi = app.ManiaTitleControlScriptAPI;
+    if (titleApi is null)
+        return "ManiaTitleControlScriptAPI not available";
+
+    auto options = ParseJsonObject(body);
+    string fileName = JsonString(options, "file_name", "");
+    if (fileName.Length == 0)
+        return "request body needs a non-empty \"file_name\"";
+
+    titleApi.EditMap(fileName, "", "");
+
+    int waited = WaitForMapEditor(NewMapEditorWaitFrames);
+    bool editorOpen = (cast<CGameCtnEditorFree>(GetApp().Editor) !is null);
+
+    summary = '{"opening":true'
+        + ',"map_editor":' + (editorOpen ? 'true' : 'false')
+        + ',"file_name":"' + JsonEscape(fileName) + '"'
+        + ',"waited_frames":' + waited
+        + '}';
+
+    return "";
+}
+
+// Json request helpers ---------------------------------------------------------
+
+Json::Value@ ParseJsonObject(const string &in body)
+{
+    int start = 0;
+    while (start < int(body.Length) && IsWhitespace(body.SubStr(start, 1)))
+        start++;
+
+    if (start >= int(body.Length) || body.SubStr(start, 1) != "{")
+        return null;
+
+    auto parsed = Json::Parse(body.SubStr(start));
+    if (parsed is null || parsed.GetType() != Json::Type::Object)
+        return null;
+
+    return parsed;
+}
+
+string JsonString(Json::Value@ obj, const string &in key, const string &in fallback)
+{
+    if (obj is null || obj.GetType() != Json::Type::Object || !obj.HasKey(key))
+        return fallback;
+
+    auto value = obj[key];
+    if (value is null || value.GetType() != Json::Type::String)
+        return fallback;
+
+    string result = value;
+    return result;
+}
+
+int JsonInt(Json::Value@ obj, const string &in key, int fallback)
+{
+    if (obj is null || obj.GetType() != Json::Type::Object || !obj.HasKey(key))
+        return fallback;
+
+    auto value = obj[key];
+    if (value is null || value.GetType() != Json::Type::Number)
+        return fallback;
+
+    int result = value;
+    return result;
+}
+
+bool JsonBool(Json::Value@ obj, const string &in key, bool fallback)
+{
+    if (obj is null || obj.GetType() != Json::Type::Object || !obj.HasKey(key))
+        return fallback;
+
+    auto value = obj[key];
+    if (value is null || value.GetType() != Json::Type::Boolean)
+        return fallback;
+
+    bool result = value;
+    return result;
+}
+
 string ApplyManialinkPreview(const string &in xml)
 {
     auto editor = cast<CGameCtnEditorFree>(GetApp().Editor);
@@ -440,6 +830,11 @@ string ToLowerAscii(const string &in value)
     }
 
     return lowered;
+}
+
+bool IsWhitespace(const string &in ch)
+{
+    return ch == " " || ch == "\t" || ch == "\r" || ch == "\n";
 }
 
 bool IsDigit(const string &in ch)
