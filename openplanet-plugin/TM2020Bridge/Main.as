@@ -5,6 +5,7 @@
 //   POST /save
 //   POST /map/new
 //   POST /map/blocks
+//   POST /map/blocks/remove
 //   POST /map/save
 //   POST /map/open
 //   POST /manialink/preview
@@ -134,6 +135,21 @@ void HandleClient(Net::Socket@ client)
     {
         string summary = "";
         string err = PlaceMapBlocks(body, summary);
+        if (err.Length == 0)
+        {
+            responseBody = summary;
+            status = 200;
+        }
+        else
+        {
+            responseBody = '{"error":"' + JsonEscape(err) + '"}';
+            status = 400;
+        }
+    }
+    else if (method == "POST" && path == "/map/blocks/remove")
+    {
+        string summary = "";
+        string err = RemoveMapBlocks(body, summary);
         if (err.Length == 0)
         {
             responseBody = summary;
@@ -521,6 +537,126 @@ string PlaceMapBlocks(const string &in body, string &out summary)
 
     summary = '{"requested":' + blocks.Length + ',"placed":' + placedCount + ',"blocks":[' + results + ']}';
     return "";
+}
+
+// Removes grid blocks, and optionally probes what the engine does to a handle it just
+// deleted. The probe answers three of the questions in HANDOFF-editor-facts.md - E2, E4 and
+// E5 - which is why it reports engine state rather than just a success flag.
+//
+// The probe reads members off a block handle AFTER the engine has removed it. That is the
+// question being asked, and it is also the thing that could take the client down, so it is
+// opt-in per request and never runs unless asked for.
+string RemoveMapBlocks(const string &in body, string &out summary)
+{
+    summary = "";
+
+    auto editor = cast<CGameCtnEditorFree>(GetApp().Editor);
+    if (editor is null)
+        return "map editor not open";
+
+    auto pmt = editor.PluginMapType;
+    if (pmt is null)
+        return "PluginMapType not available";
+
+    auto options = ParseJsonObject(body);
+    if (options is null || !options.HasKey("blocks"))
+        return "request body needs a \"blocks\" array";
+
+    auto blocks = options["blocks"];
+    if (blocks is null || blocks.GetType() != Json::Type::Array)
+        return "\"blocks\" must be an array";
+
+    bool probe = JsonBool(options, "probe", false);
+
+    string results = "";
+    int removedCount = 0;
+
+    for (int i = 0; i < int(blocks.Length); i++)
+    {
+        auto entry = blocks[i];
+        int x = JsonInt(entry, "x", 0);
+        int y = JsonInt(entry, "y", -1);
+        int z = JsonInt(entry, "z", 0);
+
+        // A negative y means "whatever is stacked here", mirroring the placement scan.
+        int resolvedY = y;
+        if (resolvedY < 0)
+            resolvedY = FindOccupiedY(pmt, x, z);
+
+        string failure = "";
+        bool removed = false;
+        string blockName = "";
+        bool infoNull = true;
+        string probeJson = "";
+
+        if (resolvedY < 0)
+        {
+            failure = "no block found in this column";
+        }
+        else
+        {
+            auto held = pmt.GetBlock(int3(x, resolvedY, z));
+            if (held is null)
+            {
+                failure = "no block at this coordinate";
+            }
+            else
+            {
+                // IdName on the block is an internal numeric id ("#38241"), not the model
+                // name. The readable name lives on BlockInfo.
+                blockName = (held.BlockInfo !is null) ? held.BlockInfo.IdName : held.IdName;
+                infoNull = (held.BlockInfo is null);
+
+                removed = pmt.RemoveBlock(int3(x, resolvedY, z));
+                if (!removed)
+                {
+                    failure = "RemoveBlock refused this coordinate";
+                }
+                else if (probe)
+                {
+                    auto after = pmt.GetBlock(int3(x, resolvedY, z));
+
+                    probeJson = ',"probe":{"get_block_null":' + (after is null ? 'true' : 'false')
+                        + ',"same_handle":' + ((after !is null && after is held) ? 'true' : 'false')
+                        + ',"held_units_e":' + held.BlockUnitsE.Length
+                        + ',"held_units":' + held.BlockUnits.Length
+                        + ',"held_info_null":' + (held.BlockInfo is null ? 'true' : 'false')
+                        + '}';
+                }
+            }
+        }
+
+        if (removed)
+            removedCount++;
+
+        if (results.Length > 0)
+            results += ',';
+
+        results += '{"x":' + x + ',"y":' + resolvedY + ',"z":' + z
+            + ',"removed":' + (removed ? 'true' : 'false')
+            + ',"name":"' + JsonEscape(blockName) + '"'
+            + ',"block_info_null":' + (infoNull ? 'true' : 'false')
+            + ',"error":"' + JsonEscape(failure) + '"'
+            + probeJson
+            + '}';
+    }
+
+    summary = '{"requested":' + blocks.Length + ',"removed":' + removedCount
+        + ',"probed":' + (probe ? 'true' : 'false')
+        + ',"blocks":[' + results + ']}';
+
+    return "";
+}
+
+int FindOccupiedY(CGameEditorPluginMap@ pmt, int x, int z)
+{
+    for (int y = 0; y < MaxGroundScanY; y++)
+    {
+        if (pmt.GetBlock(int3(x, y, z)) !is null)
+            return y;
+    }
+
+    return -1;
 }
 
 int FindGroundY(CGameEditorPluginMap@ pmt, CGameCtnBlockInfo@ model, int x, int z, CGameEditorPluginMap::ECardinalDirections dir)

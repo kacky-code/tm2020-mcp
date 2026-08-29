@@ -195,6 +195,56 @@ public sealed class OpenPlanetClientTests
         Assert.Contains("an editor is already open", result.Body);
     }
 
+    [Fact]
+    public async Task RemoveMapBlocksAsync_PostsCoordinatesAndKeepsTheProbeOff()
+    {
+        string? capturedBody = null;
+        HttpRequestMessage? captured = null;
+        using var http = new HttpClient(new StubHandler(async (request, cancellationToken) =>
+        {
+            captured = request;
+            capturedBody = request.Content is null
+                ? null
+                : await request.Content.ReadAsStringAsync(cancellationToken);
+
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("""{"requested":1,"removed":1,"probed":false,"blocks":[]}""")
+            };
+        }));
+
+        var client = new OpenPlanetClient(http, "http://bridge");
+
+        var result = await client.RemoveMapBlocksAsync([new MapBlockRemoval(24, 24)]);
+
+        Assert.True(result.Success);
+        Assert.Equal("http://bridge/map/blocks/remove", captured?.RequestUri?.ToString());
+        Assert.Equal(
+            """{"blocks":[{"x":24,"z":24,"y":-1}],"probe":false}""",
+            capturedBody);
+    }
+
+    [Fact]
+    public async Task RemoveMapBlocksAsync_SendsTheProbeFlagOnlyWhenAsked()
+    {
+        string? capturedBody = null;
+        using var http = new HttpClient(new StubHandler(async (request, cancellationToken) =>
+        {
+            capturedBody = request.Content is null
+                ? null
+                : await request.Content.ReadAsStringAsync(cancellationToken);
+
+            return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("{}") };
+        }));
+
+        var client = new OpenPlanetClient(http, "http://bridge");
+
+        await client.RemoveMapBlocksAsync([new MapBlockRemoval(1, 2, 9)], probe: true);
+
+        Assert.Contains("\"probe\":true", capturedBody);
+        Assert.Contains("\"y\":9", capturedBody);
+    }
+
     private sealed class StubHandler : HttpMessageHandler
     {
         private readonly Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> _responseFactory;

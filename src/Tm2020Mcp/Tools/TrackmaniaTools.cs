@@ -578,6 +578,27 @@ public sealed class TrackmaniaTools
 
     private static readonly JsonSerializerOptions FreeBlockJson = new() { PropertyNameCaseInsensitive = true };
 
+    [McpServerTool(Name = "remove_map_block"), Description("Remove one grid block from the open map editor. Reports what was there before it went, and optionally probes what the engine does to a block handle it has just deleted.")]
+    public async Task<string> RemoveMapBlock(
+        [Description("Map coordinate along X.")] int x,
+        [Description("Map coordinate along Z.")] int z,
+        [Description("Height. A negative value scans the column and takes whatever is stacked there.")] int y = -1,
+        [Description("Read engine state off the deleted block's handle afterwards. This answers whether the engine clears block units and whether GetBlock still returns the same handle, and it is the kind of read that can crash the client. Use a scratch map.")] bool probe = false)
+    {
+        var status = await _client.GetStatusAsync();
+        if (status is null)
+            return "OpenPlanet bridge not reachable. Check that TM2020Bridge is loaded.";
+
+        if (!status.MapEditor)
+            return "OpenPlanet bridge is running, but the map editor is not open.";
+
+        var result = await _client.RemoveMapBlocksAsync([new MapBlockRemoval(x, z, y)], probe);
+
+        return result.Success
+            ? $"OpenPlanet: remove requested at ({x}, {y}, {z}).\n{result.Body}"
+            : $"OpenPlanet: remove failed.\n{result.Body}";
+    }
+
     [McpServerTool(Name = "get_recent_manialink_events"), Description("Return recent ManiaLink event payloads recorded by the OpenPlanet bridge.")]
     public async Task<string> GetRecentManialinkEvents()
     {

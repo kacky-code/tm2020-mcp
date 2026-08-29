@@ -14,8 +14,8 @@ The project has two pieces:
 - Preview ManiaLink XML from a local file.
 - Clear the current ManiaLink preview.
 - Trigger map-editor autosave.
-- Create a new map in the editor, place a minimal start/straight/finish track in it, and save
-  it to disk (`create_map`). Needs the game at the main menu with no editor open.
+- Create a new map in the editor, place and remove blocks, and save it to disk (`create_map`,
+  `remove_map_block`). Needs the game at the main menu with no editor open.
 - Read saved maps straight off disk with GBX.NET, with no running game: list a map's blocks
   (`inspect_map_gbx`), derive what a block direction means in world coordinates by counting
   neighbours across a corpus (`analyze_map_block_directions`), and walk a track from its start
@@ -353,6 +353,9 @@ On Linux, `host.docker.internal` may require host-gateway mapping:
 - `preview_manialink_file(path)` - read an XML file from disk and preview it.
 - `clear_manialink_preview()` - clear the current preview.
 - `autosave_map_editor()` - trigger map-editor autosave.
+- `remove_map_block(x, z, y?, probe?)` - remove one grid block from the open editor, reporting
+  what was there. `probe` additionally reads engine state off the deleted block's handle; see
+  below.
 - `create_map(saveAs?, withTrack?, straightCount?, direction?, originX?, originZ?,
   environment?, decoration?, mapType?, waitSeconds?)` - open the editor on a brand new map,
   optionally lay a track, optionally save it. Pass `routeLength` to place a generated turning
@@ -391,6 +394,27 @@ On Linux, `host.docker.internal` may require host-gateway mapping:
   XML fragment for one EmojiChat line.
 - `build_manialink_video_probe_xml(data, music?, play?, hidden?)` - generate a small
   ManiaLink document with a `<video>` tag for GPS/video experiments.
+
+## Probing Engine Behaviour
+
+`remove_map_block(..., probe: true)` exists to settle questions the class reference cannot
+answer. It holds the block handle, removes the block, and then reports what the engine left
+behind:
+
+```text
+"probe": {
+  "get_block_null": true,     GetBlock at that coordinate afterwards
+  "same_handle": false,       whether it is the handle we held
+  "held_units_e": 0,          BlockUnitsE.Length on the deleted handle
+  "held_units": 0,            BlockUnits.Length on the deleted handle
+  "held_info_null": false     BlockInfo on the deleted handle
+}
+```
+
+That answers E2, E4 and E5 of [`HANDOFF-editor-facts.md`](HANDOFF-editor-facts.md) in one call.
+**Reading members off a handle the engine has just freed is the question being asked, and it is
+also the thing that could take the client down**, so the probe is opt-in per request and off by
+default. Run it on a scratch map, which `create_map` will make for you.
 
 ## Map Analysis
 
@@ -595,6 +619,15 @@ Preview an XML file:
 curl -4 -sS --max-time 5 \
   --data-binary @/path/to/widget.xml \
   http://127.0.0.1:29100/manialink/preview
+```
+
+Remove a block, and ask what the engine did to the handle:
+
+```bash
+curl -4 -sS --max-time 10 \
+  -H 'Content-Type: application/json' \
+  --data '{"blocks":[{"x":24,"y":-1,"z":24}],"probe":true}' \
+  http://127.0.0.1:29100/map/blocks/remove
 ```
 
 Clear preview:
