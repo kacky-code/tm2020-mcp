@@ -245,26 +245,6 @@ public sealed class OpenPlanetClientTests
         Assert.Contains("\"y\":9", capturedBody);
     }
 
-    private sealed class StubHandler : HttpMessageHandler
-    {
-        private readonly Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> _responseFactory;
-
-        public StubHandler(Func<HttpRequestMessage, HttpResponseMessage> responseFactory)
-            : this((request, _) => Task.FromResult(responseFactory(request)))
-        {
-        }
-
-        public StubHandler(Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> responseFactory)
-        {
-            _responseFactory = responseFactory;
-        }
-
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
-        {
-            return _responseFactory(request, cancellationToken);
-        }
-    }
-
     private sealed class ThrowingHandler : HttpMessageHandler
     {
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)

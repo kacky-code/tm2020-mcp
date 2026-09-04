@@ -118,6 +118,65 @@ public sealed class OpenPlanetClient
         }
     }
 
+    /// <summary>
+    /// Lists the server-sent HUD layers on the local client.
+    /// </summary>
+    /// <remarks>
+    /// Reads the player's own client, so it needs Trackmania running, connected to a server,
+    /// with the bridge plugin loaded. A layer's XML is what a Nadeo UI module actually renders,
+    /// which is otherwise unreadable because the module scripts are not published.
+    /// </remarks>
+    public async Task<UiLayerList?> GetUiLayersAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var response = await _http.GetAsync($"{_baseUrl}/layers", cancellationToken);
+            if (!response.IsSuccessStatusCode)
+                return null;
+
+            var dto = await response.Content.ReadFromJsonAsync<UiLayerListDto>(JsonOptions, cancellationToken);
+            if (dto is null)
+                return null;
+
+            var layers = (dto.Layers ?? [])
+                .Select(layer => new UiLayer(
+                    layer.Index,
+                    layer.AttachId ?? string.Empty,
+                    layer.Type ?? string.Empty,
+                    layer.Visible,
+                    layer.AnimInProgress,
+                    layer.ScriptRunning,
+                    layer.XmlLength,
+                    layer.Tag ?? string.Empty))
+                .ToList();
+
+            return new UiLayerList(dto.Connected, layers, dto.Error);
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Returns one layer's ManiaLink XML, or null when there is no layer at that index.
+    /// </summary>
+    public async Task<string?> GetUiLayerXmlAsync(int index, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var response = await _http.GetAsync($"{_baseUrl}/layers/{index}", cancellationToken);
+            if (!response.IsSuccessStatusCode)
+                return null;
+
+            return await response.Content.ReadAsStringAsync(cancellationToken);
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
+
     public async Task<OpenPlanetResult> RecordManialinkEventAsync(string body, CancellationToken cancellationToken = default)
     {
         using var content = new StringContent(body, Encoding.UTF8, "application/json");
@@ -144,6 +203,21 @@ public sealed class OpenPlanetClient
     }
 
     private static string NormalizeBaseUrl(string url) => url.Trim().TrimEnd('/');
+
+    private sealed record UiLayerListDto(
+        [property: JsonPropertyName("connected")] bool Connected,
+        [property: JsonPropertyName("layers")] List<UiLayerDto>? Layers,
+        [property: JsonPropertyName("error")] string? Error);
+
+    private sealed record UiLayerDto(
+        [property: JsonPropertyName("index")] int Index,
+        [property: JsonPropertyName("attachId")] string? AttachId,
+        [property: JsonPropertyName("type")] string? Type,
+        [property: JsonPropertyName("visible")] bool Visible,
+        [property: JsonPropertyName("animInProgress")] bool AnimInProgress,
+        [property: JsonPropertyName("scriptRunning")] bool ScriptRunning,
+        [property: JsonPropertyName("xmlLength")] int XmlLength,
+        [property: JsonPropertyName("tag")] string? Tag);
 
     private sealed record OpenPlanetStatusDto(
         [property: JsonPropertyName("running")] bool Running,
