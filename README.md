@@ -147,6 +147,10 @@ the MCP server itself is wired up correctly.
 
 ### 9. Optional: run the W7 readback probe
 
+Mostly superseded. The layer readback it proved now ships in the bridge itself, as
+`GET /layers` and the `list_ui_layers` / `get_ui_layer_xml` tools. Keep the probe for the
+image-quad tally, which the endpoints do not cover.
+
 Throwaway probe answering wayfinder ticket W7 (see `WAYFINDER-MAP.md`): whether server-delivered
 UI layers really expose a walkable page, and whether a failed image load is detectable.
 
@@ -165,6 +169,33 @@ count, and an image-quad tally of `loaded / pending / failed` with a line per fa
 `ClientManiaAppPlayground is null` means you are not on a server yet.
 
 Delete the folder when it has answered its question.
+
+## Reading The Game's Own HUD
+
+A Nadeo UI module cannot be read from source: the module scripts ship inside the title pack and
+are not published. The XML they produce is readable live, which is the half that matters when you
+are trying to match their look or work out what an API call actually draws.
+
+```text
+list_ui_layers            list the server-sent HUD layers on your client
+get_ui_layer_xml <index>  return one layer's ManiaLink XML
+```
+
+Or straight from the bridge:
+
+```bash
+curl -4 -sS --max-time 3 http://127.0.0.1:29100/layers
+curl -4 -sS --max-time 3 http://127.0.0.1:29100/layers/7
+```
+
+This reads **your own client**, so Trackmania must be running with the bridge plugin loaded, and
+you must be **connected to a server**. In the menus there is no playground and the response says
+`"connected": false` rather than returning an empty list, because "no layers" and "not in a game"
+are different answers.
+
+`attachId` is `Unassigned` on every layer in Trackmania 2020, so it cannot identify anything. Use
+the `tag` field, the `<manialink>` opening tag, which carries the id. Indexes shift as layers come
+and go, so list before you fetch.
 
 ## Native .NET Or Docker?
 

@@ -57,6 +57,41 @@ public sealed class TrackmaniaTools
         return $"running={status.Running}, editor_open={status.EditorOpen}, map_editor={status.MapEditor}, interface_designer={status.InterfaceDesigner}, module_editor={status.ModuleEditor}, manialink_preview={status.ManialinkPreview}";
     }
 
+    [McpServerTool(Name = "list_ui_layers"), Description("List the server-sent HUD layers on the local TM2020 client. This is how to see what a Nadeo UI module actually renders: the module scripts are not published, but the ManiaLink they produce is readable live. Requires the game running and connected to a server.")]
+    public async Task<string> ListUiLayers()
+    {
+        var result = await _client.GetUiLayersAsync();
+        if (result is null)
+            return "Bridge unreachable. Is Trackmania running with the TM2020Bridge plugin loaded?";
+
+        if (!result.Connected)
+            return $"Not connected to a server ({result.Error ?? "no playground"}). HUD layers only exist in a playground, so join a server and try again.";
+
+        if (result.Layers.Count == 0)
+            return "Connected, but no HUD layers are present.";
+
+        var lines = result.Layers.Select(layer =>
+            $"[{layer.Index}] {layer.Type} visible={layer.Visible} script={layer.ScriptRunning} xml={layer.XmlLength}B {layer.Tag}");
+
+        return $"{result.Layers.Count} layers. AttachId is Unassigned on every layer in TM2020, so the tag identifies them.\n"
+            + string.Join("\n", lines)
+            + "\nUse get_ui_layer_xml with an index to read one layer's ManiaLink.";
+    }
+
+    [McpServerTool(Name = "get_ui_layer_xml"), Description("Return one HUD layer's ManiaLink XML by index, as listed by list_ui_layers. Use it to read how a Nadeo UI module is built rather than guessing at its unpublished source.")]
+    public async Task<string> GetUiLayerXml(
+        [Description("Layer index from list_ui_layers.")] int index)
+    {
+        if (index < 0)
+            return "Layer index must be zero or greater.";
+
+        var xml = await _client.GetUiLayerXmlAsync(index);
+        if (xml is null)
+            return $"No layer at index {index}, or the bridge is unreachable. Run list_ui_layers first: indexes shift as layers come and go.";
+
+        return xml;
+    }
+
     [McpServerTool(Name = "preview_manialink_xml"), Description("Push raw ManiaLink XML into TM2020 through the OpenPlanet TM2020Bridge plugin.")]
     public async Task<string> PreviewManialinkXml(
         [Description("Full ManiaLink XML.")] string xml)

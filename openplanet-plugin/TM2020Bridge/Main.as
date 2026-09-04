@@ -246,6 +246,28 @@ void HandleClient(Net::Socket@ client)
             return;
         }
     }
+    else if (method == "GET" && path == "/layers")
+    {
+        responseBody = GetUiLayersJson();
+        status = 200;
+    }
+    else if (method == "GET" && path.Length > 8 && path.SubStr(0, 8) == "/layers/")
+    {
+        string indexText = path.SubStr(8, path.Length - 8);
+        string layerXml = "";
+        string err = GetUiLayerXml(indexText, layerXml);
+        if (err.Length > 0)
+        {
+            responseBody = '{"error":"' + JsonEscape(err) + '"}';
+            status = 404;
+        }
+        else
+        {
+            SendResponse(client, 200, "application/xml", layerXml);
+            client.Close();
+            return;
+        }
+    }
     else if (method == "GET" && path == "/manialink/events")
     {
         responseBody = GetRecentManialinkEventsJson();
@@ -907,6 +929,111 @@ void SendResponse(Net::Socket@ client, int status, const string &in contentType,
         + body;
 
     client.WriteRaw(response);
+}
+
+// Server-sent HUD layers, read off the local client.
+//
+// This is the only way to see what a Nadeo UI module actually renders: the module scripts
+// live in the title pack and are not published, but ManialinkPageUtf8 is the XML they
+// produce, live. AttachId is Unassigned on every layer in Trackmania 2020, so the
+// <manialink> opening tag is the identifier (see _W7Probe).
+//
+// Requires being connected to a server. ClientManiaAppPlayground is null in the menus.
+CGameManiaAppPlayground@ GetPlaygroundManiaApp()
+{
+    auto app = GetApp();
+    if (app is null) return null;
+
+    auto network = cast<CTrackManiaNetwork>(app.Network);
+    if (network is null) return null;
+
+    return network.ClientManiaAppPlayground;
+}
+
+string LayerTypeName(CGameUILayer::EUILayerType type)
+{
+    switch (type) {
+        case CGameUILayer::EUILayerType::Normal:            return "Normal";
+        case CGameUILayer::EUILayerType::ScoresTable:       return "ScoresTable";
+        case CGameUILayer::EUILayerType::ScreenIn3d:        return "ScreenIn3d";
+        case CGameUILayer::EUILayerType::AltMenu:           return "AltMenu";
+        case CGameUILayer::EUILayerType::Markers:           return "Markers";
+        case CGameUILayer::EUILayerType::CutScene:          return "CutScene";
+        case CGameUILayer::EUILayerType::InGameMenu:        return "InGameMenu";
+        case CGameUILayer::EUILayerType::EditorPlugin:      return "EditorPlugin";
+        case CGameUILayer::EUILayerType::ManiaplanetPlugin: return "ManiaplanetPlugin";
+        case CGameUILayer::EUILayerType::ManiaplanetMenu:   return "ManiaplanetMenu";
+        case CGameUILayer::EUILayerType::LoadingScreen:     return "LoadingScreen";
+    }
+    return "Unknown(" + int(type) + ")";
+}
+
+// The <manialink> opening tag, which carries the id attribute. Short enough to list.
+string ManialinkTag(const string &in xml)
+{
+    if (xml.Length == 0) return "";
+
+    int at = xml.IndexOf("<manialink");
+    if (at < 0) return "";
+
+    uint remaining = xml.Length - uint(at);
+    uint take = remaining;
+    if (take > 160) take = 160;
+    return xml.SubStr(uint(at), take);
+}
+
+string GetUiLayersJson()
+{
+    auto maniaApp = GetPlaygroundManiaApp();
+    if (maniaApp is null)
+    {
+        return '{"connected":false,"layers":[],"error":"not connected to a server"}';
+    }
+
+    string json = '{"connected":true,"layers":[';
+    for (uint i = 0; i < maniaApp.UILayers.Length; i++)
+    {
+        auto layer = maniaApp.UILayers[i];
+        if (layer is null) continue;
+
+        string xml = layer.ManialinkPageUtf8;
+        if (i > 0) json += ",";
+        json += '{"index":' + i
+            + ',"attachId":"' + JsonEscape(layer.AttachId) + '"'
+            + ',"type":"' + JsonEscape(LayerTypeName(layer.Type)) + '"'
+            + ',"visible":' + (layer.IsVisible ? "true" : "false")
+            + ',"animInProgress":' + (layer.AnimInProgress ? "true" : "false")
+            + ',"scriptRunning":' + (layer.IsLocalPageScriptRunning ? "true" : "false")
+            + ',"xmlLength":' + xml.Length
+            + ',"tag":"' + JsonEscape(ManialinkTag(xml)) + '"'
+            + '}';
+    }
+    json += "]}";
+    return json;
+}
+
+// Returns "" on success and writes the XML to _xml, otherwise an error string.
+string GetUiLayerXml(const string &in indexText, string &out _xml)
+{
+    _xml = "";
+
+    auto maniaApp = GetPlaygroundManiaApp();
+    if (maniaApp is null) return "not connected to a server";
+
+    for (uint i = 0; i < indexText.Length; i++)
+    {
+        if (!IsDigit(indexText.SubStr(i, 1))) return "layer index must be a number";
+    }
+    if (indexText.Length == 0) return "layer index must be a number";
+
+    uint index = Text::ParseUInt(indexText);
+    if (index >= maniaApp.UILayers.Length) return "no layer at index " + index;
+
+    auto layer = maniaApp.UILayers[index];
+    if (layer is null) return "no layer at index " + index;
+
+    _xml = layer.ManialinkPageUtf8;
+    return "";
 }
 
 string JsonEscape(const string &in value)
