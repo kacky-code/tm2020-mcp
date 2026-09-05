@@ -28,3 +28,10 @@ PuzzleMode.zip
 PuzzleModeOld/
 PuzzleMode-*.md
 PuzzleMode-*.diff
+
+# Reference mirrors of third-party ManiaScript repos. 224 MB of other people's code,
+# reproducible with refs/refresh.sh, so the manifest is tracked and the clones are not.
+refs/*
+!refs/MANIFEST.md
+!refs/refresh.sh
+!refs/README.md

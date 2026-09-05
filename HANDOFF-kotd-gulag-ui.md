@@ -33,8 +33,8 @@ Three screens between rounds:
    effort. It is the payoff moment of the whole mechanic.
 
 Damel's question, answered: yes, a fully custom screen is available. `Layers::Create` /
-`Attach` / `Update` is standard, 774 uses across the ~1,900 script reference mirror at
-`~/personalProjects/tm-gamemode-refs`.
+`Attach` / `Update` is standard, 774 uses across the ~1,900 script reference mirror in
+`refs/` of this repo.
 
 ## The blocking question
 
