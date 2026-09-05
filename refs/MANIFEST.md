@@ -10,8 +10,8 @@ Regenerate with `./refresh.sh`. Nothing here is ours - do not edit, just read.
 | [maniaplanet/game-modes-mp3](https://github.com/maniaplanet/game-modes-mp3) | `72d80c8` | 2017-07-11 |
 | [AmazingBeu/TM2020-Gamemodes](https://github.com/AmazingBeu/TM2020-Gamemodes) | `bb9cb32` | 2025-12-06 |
 | [reaby/TMModeTemplate](https://github.com/reaby/TMModeTemplate) | `29dcf8e` | 2023-12-03 |
-| [The-Jonsey/tm-gamemodes](https://github.com/The-Jonsey/tm-gamemodes) | `575517e` | 2026-07-14 |
-| [XertroV/tm-archivist](https://github.com/XertroV/tm-archivist) | `1fd5800` | 2025-06-10 |
+| [The-Jonsey/tm-gamemodes](https://github.com/The-Jonsey/tm-gamemodes) | `deeb015` | 2026-08-23 |
+| [XertroV/tm-archivist](https://github.com/XertroV/tm-archivist) | `8b908a6` | 2026-08-09 |
 | [Ouhouuhu/Revive-KO](https://github.com/Ouhouuhu/Revive-KO) | `4fa6c0c` | 2024-08-13 |
 | [reaby/Revive-KO](https://github.com/reaby/Revive-KO) | `4fa6c0c` | 2024-08-13 |
 | [yannpradel/game-modes](https://github.com/yannpradel/game-modes) | `b8c054d` | 2019-11-05 |
@@ -31,8 +31,8 @@ Regenerate with `./refresh.sh`. Nothing here is ours - do not edit, just read.
 | [MLEPP/shootmania](https://github.com/MLEPP/shootmania) | `7115841` | 2012-12-22 |
 | [domino54/title-packs](https://github.com/domino54/title-packs) | `1bc1b18` | 2018-07-05 |
 | [Geekid812/TrackmaniaBingo](https://github.com/Geekid812/TrackmaniaBingo) | `9a3c9e5` | 2026-05-14 |
-| [BigBang1112/maniascript-sharp](https://github.com/BigBang1112/maniascript-sharp) | `2b1b7c0` | 2023-11-06 |
-| [clankercode/lsp-openplanet](https://github.com/clankercode/lsp-openplanet) | `643c087` | 2026-04-20 |
+| [BigBang1112/maniascript-sharp](https://github.com/BigBang1112/maniascript-sharp) | `85efbf3` | 2026-08-13 |
+| [clankercode/lsp-openplanet](https://github.com/clankercode/lsp-openplanet) | `16bc588` | 2026-09-01 |
 | [SM-Obstacle/Titlepack](https://github.com/SM-Obstacle/Titlepack) | `722897a` | 2025-10-05 |
 | [domino54/TMAll](https://github.com/domino54/TMAll) | `fe35fe6` | 2025-08-02 |
 | [AreaFiftyLAN/lancie-tooling](https://github.com/AreaFiftyLAN/lancie-tooling) | `7dd4199` | 2021-03-01 |

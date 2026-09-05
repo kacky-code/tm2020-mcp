@@ -20,6 +20,7 @@ implementing unfamiliar or risky API usage.
 | [angelscript-language.md](angelscript-language.md) | https://www.angelcode.com/angelscript/sdk/docs/manual/doc_script.html | AngelScript language rules for the one file `dotnet build` cannot check: handles, `is`/`!is`, `&in`/`&out`, nested enums, and the Openplanet-only additions. |
 | [Game.CGameManiaplanetPlugin.md](Game.CGameManiaplanetPlugin.md) | https://next.openplanet.dev/Game/CGameManiaplanetPlugin | OpenPlanet plugin context surface with current server/map/player state and inherited ManiaApp APIs. |
 | [manialink-elements.md](manialink-elements.md) | https://doc.maniaplanet.com/manialink/getting-started | Practical ManiaLink XML tag notes for frames, quads, labels, audio/music, and paste-safe Interface Designer fragments. |
+| [knockout-ui-modules.md](knockout-ui-modules.md) | Captured live from the client with `GET /layers/{index}`, raw XML in `examples/hud-layers/` | What Nadeo's four Knockout UI modules render and expose. Settles that the roll-call header is a fixed literal, so custom knockout screens need their own layer. |
 
 ## Update Policy
 
