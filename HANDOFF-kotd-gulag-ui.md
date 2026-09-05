@@ -1,6 +1,34 @@
 # Handoff: design the KOTD gulag screens by reading Nadeo's HUD
 
-Status: **bridge side shipped and untested against a running client.** Created 2026-09-04.
+Status: **done, 2026-09-05.** The question below is answered and all three screens are built.
+Created 2026-09-04. Kept for the reasoning; start from "What happened" rather than "Do this".
+
+## What happened (2026-09-05)
+
+**The roll-call header is a fixed literal**, so screens 2 and 3 needed their own layer. The module
+draws `text="Knocked out players"` in a label with no `id`, its count line is script-filled from a
+hardcoded `"%1 players eliminated"`, and its whole interface is five netread variables, none of
+them text or styling. Handed an empty list it does not render blank -- it announces "No elimination
+in the first round", which is what the field saw on round 3 of that evening's playtest.
+
+Everything captured and argued in [`docs/openplanet/knockout-ui-modules.md`](docs/openplanet/knockout-ui-modules.md),
+with the raw ManiaLink of four Knockout modules in [`examples/hud-layers/`](examples/hud-layers/).
+
+**All three screens exist and were watched working in real cups**, on branches
+`kotd-gulag-screens` (KackyGG and kacky-infra-ansible) and `kotd-gulag-ui` (here). The elimination
+roll-call is ours too, since Nadeo's cannot be recoloured to match.
+
+**Two things the plan here got wrong.** The dev server link cannot be joined with the bridge
+loaded: Developer Mode enables School Mode, which disconnects the client from any server running a
+map outside the Openplanet School Campaign. Serve a campaign map instead. And `/layers` cannot see
+a mode's own layers, only the title's UI modules, so a custom layer is invisible there even while
+it is on screen -- confirmed with a red probe quad.
+
+**Still open:** the wording on all three screens is the agent's, not Kacky's; showing who did *not*
+make it back after a gulag is not built; the comma-separated name list has not been seen rendering.
+
+---
+
 
 You are picking this up on Windows, where Trackmania actually runs. Everything here needs a
 live client, which is why it could not be finished on macOS.
