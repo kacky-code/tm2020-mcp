@@ -1036,6 +1036,12 @@ string GetUiLayerXml(const string &in indexText, string &out _xml)
     return "";
 }
 
+string HexByte(uint8 b)
+{
+    const string digits = "0123456789abcdef";
+    return digits.SubStr(b >> 4, 1) + digits.SubStr(b & 0x0F, 1);
+}
+
 string JsonEscape(const string &in value)
 {
     string escaped = "";
@@ -1050,6 +1056,13 @@ string JsonEscape(const string &in value)
             escaped += "\\r";
         else if (ch == "\n")
             escaped += "\\n";
+        else if (ch == "\t")
+            escaped += "\\t";
+        // Nadeo's ManiaLink is indented with tabs and carries the odd other control
+        // byte. JSON forbids those raw, and one of them makes the whole response
+        // unparseable, which reaches the MCP client as "bridge unreachable".
+        else if (ch < " ")
+            escaped += "\\u00" + HexByte(value[i]);
         else
             escaped += ch;
     }

@@ -1,0 +1,901 @@
+
+<manialink name="UIModule_Knockout_KnockoutInfo" version="3">
+
+<!-- @Component start component-cmgame-uimodules -->
+<framemodel id="component-cmgame-uimodules">
+		</framemodel>
+<!-- @Component end component-cmgame-uimodules -->
+
+<!-- @Component start component-loadingspinner -->
+<framemodel id="component-loadingspinner">
+<quad id="menu-libs-loading-spinner_quad-dimmer" size="320 180" halign="center" valign="center" bgcolor="000514" opacity="0.8" fullscreen="1" z-index="0" hidden="1"/>
+<quad id="menu-libs-loading-spinner_quad-loading" halign="center" valign="center" image="file://Media/Manialinks/Nadeo/CMGame/Components/LoadingSpinner/LoadingSpinner.dds" size="15 15" z-index="1" hidden="1"/>
+<label id="menu-libs-loading-spinner_label-loading" pos="0 -15" halign="center" valign="center2" size="150 15" textfont="GameFontRegular" textcolor="fff" textprefix="$i" textsize="5" z-index="1"/>
+	</framemodel>
+<!-- @Component end component-loadingspinner -->
+
+<!-- @Component start component-cmgame-player-name -->
+<framemodel id="component-cmgame-player-name">
+<frame class="cmgame-player-name_player-name">
+	<frame id="cmgame-player-name_frame-align">
+		<frameinstance id="cmgame-player-name_loading-spinner-name" modelid="component-loadingspinner" />
+		<!--
+		We MUST initialize the label with a textprefix value.
+		Otherwise the `TextPrefix` property initialization in the
+		script will be bugged. The latest `TextPrefix` applied
+		will also be applied to all other labels that had their
+		`TextPrefix` updated.
+		-->
+		<label id="cmgame-player-name_label-name" valign="center2" textprefix="$z" />
+		<label id="cmgame-player-name_label-first-party-icon" valign="center2" textfont="GameFontExtraBold" />
+	</frame>
+</frame>
+	</framemodel>
+<!-- @Component end component-cmgame-player-name -->
+
+<stylesheet>
+	<style class="text-ingame-text" textfont="GameFontExtraBold" textcolor="FFFFFF" textsize="1.5" valign="center2" textprefix="$i$t"/>
+	<style class="text-ingame-time" textfont="GameFontSemiBold" textcolor="FFFFFF" textsize="1.25" valign="center2" textprefix="$i$t"/>
+	<style class="text-ingame-number" textfont="GameFontExtraBold" textcolor="FFFFFF" textsize="1.5" valign="center2" textprefix="$i$t"/>
+	<style class="quad-base" halign="center" valign="center"/>
+</stylesheet>
+<framemodel id="player-score">
+	<label id="label-rank" pos="0 0" size="5 10" class="text-ingame-number" halign="left" />
+	<frameinstance id="playername-name" z-index="2" modelid="component-cmgame-player-name" pos="6 0" data-size="30 10" data-halign="left" data-valign="center" data-textprefix="$t$i" data-textfont="GameFontExtraBold" data-textsize="1.5" />
+	<label id="label-time-diff" pos="51.5 0" size="14.5 10" class="text-ingame-time" halign="right" />
+	<quad id="quad-focus-bg" z-index="-2" pos="-1 0" size="53.5 5" class="quad-base" halign="left" opacity="0.7" bgcolor="000"/>
+	<quad id="quad-player-score-hitbox" z-index="-1" pos="-1 0" size="53.5 5" class="quad-base" halign="left" scriptevents="1" bgcolor="0000" bgcolorfocus="0007"/>
+</framemodel>
+
+<frame z-index="-2" hidden="1" id="frame-global">
+	<frame  id="Knockout_KnockoutInfo" class="component-cmgame-uimodules-module" pos="-160. 0." scale="1." hidden="0" data-customizable-module-enabled="1"  size="69.5 180" valign="center">
+		<frame id="frame-content" pos="1 0">
+			<frame pos="56. 20.25" id="frame-toggle">
+				<quad id="quad-toggle" size="6 6" class="quad-base" z-index="3" opacity="0.9" scriptevents="1" image="file://Media/Manialinks/Nadeo/CMGame/Utils/Icons/128x128/ICON_ARROW_LEFT_OBLIQUE.dds" colorize="fff"/>
+			</frame>
+			<frame id="frame-live-ranking">
+				<frame pos="0 10">
+					<quad id="quad-info-bg" pos="-1 5.25" size="53.5 16" valign="center" z-index="-3" bgcolor="000" opacity="0.5"/>
+					<label id="label-info-map-rounds" pos="0 15" size="24.75 10" class="text-ingame-text" text="Track rounds" halign="left" />
+					<label id="label-server-number" pos="24.75 15" size="44.5 10" class="text-ingame-text" halign="center" />
+					<label pos="0 10" size="24.75 10" class="text-ingame-text" text="|Race|Round" halign="left" />
+					<label pos="0 5" size="24.75 10" class="text-ingame-text" text="Players" halign="left" />
+					<label size="24.75 10" class="text-ingame-text" text="KOs per round" halign="left" />
+					<label id="label-map-rounds" pos="51.5 15" size="24.75 10" class="text-ingame-number" halign="right" />
+					<label id="label-round" pos="51.5 10" size="24.75 10" class="text-ingame-number" halign="right" />
+					<label id="label-players" pos="51.5 5" size="24.75 10" class="text-ingame-number" halign="right" />
+					<label id="label-KOs" pos="51.5 0" size="24.75 10" class="text-ingame-number" halign="right" />
+				</frame>
+				<frame pos="-1 0" id="frame-separator">
+					<quad pos="26.75 1.75" size="49.5 0.25" bgcolor="fff" class="quad-base"/>
+				</frame>
+				<quad pos="-1 2.75" size="53.5 57." z-index="-3" bgcolor="000" opacity="0.5"/>
+				<frame id="frame-scores">
+					
+<frameinstance modelid="player-score" id="frame-score-0" pos="0 0."/>
+		
+<frameinstance modelid="player-score" id="frame-score-1" pos="0 -5.5"/>
+		
+<frameinstance modelid="player-score" id="frame-score-2" pos="0 -11."/>
+		
+<frameinstance modelid="player-score" id="frame-score-3" pos="0 -16.5"/>
+		
+<frameinstance modelid="player-score" id="frame-score-4" pos="0 -22."/>
+		
+<frameinstance modelid="player-score" id="frame-score-5" pos="0 -27.5"/>
+		
+<frameinstance modelid="player-score" id="frame-score-6" pos="0 -33."/>
+		
+<frameinstance modelid="player-score" id="frame-score-7" pos="0 -38.5"/>
+		
+<frameinstance modelid="player-score" id="frame-score-8" pos="0 -44."/>
+		
+<frameinstance modelid="player-score" id="frame-score-9" pos="0 -49.5"/>
+		
+				</frame>
+			</frame>
+		</frame>
+	</frame>
+</frame>
+
+<script><!--
+
+// @Component start component-cmgame-uimodules
+// /*
+
+#Include "Libs/Nadeo/CMGame/Utils/Tools.Script.txt" as Component_CMGame_UIModules_Tools
+#Include "Libs/Nadeo/CMGame/Modes/UIModules_Common.Script.txt" as Component_CMGame_UIModules_UIModules_Common
+
+#Struct Component_CMGame_UIModules_K_Module {
+	CMlControl Control;
+	Boolean IsCustom;
+	Component_CMGame_UIModules_UIModules_Common::K_ModuleProperties DefaultProperties;
+}
+		
+// */
+// @Component end component-cmgame-uimodules
+
+// @Component start component-loadingspinner
+// /*
+
+#Include "Libs/Nadeo/CMGame/Components/LoadingSpinner.Script.txt" as CMGame_LoadingSpinner
+		
+// */
+// @Component end component-loadingspinner
+
+// @Component start component-cmgame-player-name
+// /*
+
+#Include "Libs/Nadeo/CMGame/Components/PlayerName.Script.txt" as CMGame_PlayerName
+		
+// */
+// @Component end component-cmgame-player-name
+
+#Include "TextLib" as TL
+#Include "MathLib" as ML
+#Include "Libs/Nadeo/CMGame/Utils/Config.Script.txt" as Config
+#Include "Libs/Nadeo/CMGame/Utils/Tools.Script.txt" as Tools
+#Include "Libs/Nadeo/CMGame/Utils/Utils.Script.txt" as Utils
+#Include "Libs/Nadeo/TMGame/Modes/MV_Utils.Script.txt" as MV_Utils
+#Include "Libs/Nadeo/TMGame/Modes/ScoresSort.Script.txt" as ScoresSort
+#Include "Libs/Nadeo/Trackmania/Modes/Knockout/Components/EliminationStatus.Script.txt" as EliminationStatus
+#Include "Libs/Nadeo/CMGame/Utils/Platform.Script.txt" as Platform
+
+#Const C_PlayerSlots_Leader 0
+#Const C_PlayerSlots_LastPlayers 1
+#Const C_PlayerSlots_TopPlayers 2
+
+#Const C_PlayerStatus_Ok 0
+#Const C_PlayerStatus_NearEliminated 1
+#Const C_PlayerStatus_VeryNearEliminated 2
+#Const C_PlayerStatus_Eliminated 3
+
+#Const C_PlayerStatus_NearEliminatedThreshold 1
+#Const C_PlayerStatus_VeryNearEliminatedThreshold 1
+
+#Const C_Color_Ok <0.431373, 0.980392, 0.627451>
+#Const C_Color_NearEliminated <1.,1.,0.>
+#Const C_Color_VeryNearEliminated <1.,.8,0.>
+#Const C_Color_Eliminated <1.,0.,0.>
+
+#Const C_Frequency_AutoRankingUpdate 250
+
+#Struct K_PlayerInfo {
+	CMGame_PlayerName::K_UserInfo UserInfo;
+	Text Login;
+	Integer TimeDiff;
+	Boolean DNF;
+	Integer PrevRank;
+	Integer CurRank;
+	Integer Status;
+}
+
+
+
+// @Component start component-cmgame-uimodules
+// /*
+
+Component_CMGame_UIModules_K_Module[Text] Component_CMGame_UIModules_Private_UpdateModulesProperties(Component_CMGame_UIModules_K_Module[Text] _UIModules, Component_CMGame_UIModules_UIModules_Common::K_ModuleProperties[Text] _ModulesProperties) {
+	declare Component_CMGame_UIModules_K_Module[Text] UIModules = _UIModules;
+	foreach (ModuleId => Module in _UIModules) {
+		// Module properties are customized
+		if (_ModulesProperties.existskey(ModuleId)) {
+			declare Component_CMGame_UIModules_UIModules_Common::K_ModuleProperties ModuleProperties = _ModulesProperties[ModuleId];
+			Module.Control.RelativePosition_V3 = ModuleProperties.Position;
+			Module.Control.RelativeScale = ModuleProperties.Scale;
+			Module.Control.Visible = ModuleProperties.Visible;
+			UIModules[ModuleId].IsCustom = True;
+		}
+		// Module properties are not customized anymore
+		else if (Module.IsCustom) {
+			Module.Control.RelativePosition_V3 = Module.DefaultProperties.Position;
+			Module.Control.RelativeScale = Module.DefaultProperties.Scale;
+			Module.Control.Visible = Module.DefaultProperties.Visible;
+			UIModules[ModuleId].IsCustom = False;
+		}
+	}
+	return UIModules;
+}
+
+Component_CMGame_UIModules_K_Module[Text] Component_CMGame_UIModules_Private_Initialize() {
+	// Find UI modules controls
+	declare Component_CMGame_UIModules_K_Module[Text] Component_CMGame_UIModules_UIModules;
+	Page.GetClassChildren("component-cmgame-uimodules-module", Page.MainFrame, True);
+	foreach (Control in Page.GetClassChildren_Result) {
+		declare TrueControlHandle = Control;
+		assert(TrueControlHandle.ControlId != "", "[UIModules] A UI module CMlControl must have an id");
+		assert(!Component_CMGame_UIModules_UIModules.existskey(TrueControlHandle.ControlId), "[UIModules] Two UI modules CMlControl cannot share the same id '"^TrueControlHandle.ControlId^"'");
+		if (
+			TrueControlHandle.DataAttributeExists("customizable-module-enabled") &&
+			Component_CMGame_UIModules_Tools::TextToBoolean(TrueControlHandle.DataAttributeGet("customizable-module-enabled"))
+		) {
+			Component_CMGame_UIModules_UIModules[TrueControlHandle.ControlId] = Component_CMGame_UIModules_K_Module {
+				Control = TrueControlHandle,
+				IsCustom = False,
+				DefaultProperties = Component_CMGame_UIModules_UIModules_Common::K_ModuleProperties {
+					Position = TrueControlHandle.RelativePosition_V3,
+					Scale = TrueControlHandle.RelativeScale,
+					Visible = TrueControlHandle.Visible
+				}
+			};
+		}
+	}
+	return Component_CMGame_UIModules_UIModules;
+}
+
+***MainInit***
+***
+declare netread Component_CMGame_UIModules_UIModules_Common::K_ModuleProperties[Text] Net_LibUI3_CustomizableModule_Properties for Teams[0];
+declare netread Integer Net_LibUI3_CustomizableModule_PropertiesUpdate for Teams[0];
+
+declare Component_CMGame_UIModules_K_Module[Text] Component_CMGame_UIModules_UIModules;
+***
+
+***MainStart***
+***
+declare Integer ModulesPropertiesUpdate = Net_LibUI3_CustomizableModule_PropertiesUpdate;
+
+Component_CMGame_UIModules_UIModules = Component_CMGame_UIModules_Private_Initialize();
+Component_CMGame_UIModules_UIModules = Component_CMGame_UIModules_Private_UpdateModulesProperties(Component_CMGame_UIModules_UIModules, Net_LibUI3_CustomizableModule_Properties);
+***
+
+***MainLoop***
+***
+if (ModulesPropertiesUpdate != Net_LibUI3_CustomizableModule_PropertiesUpdate) {
+	ModulesPropertiesUpdate = Net_LibUI3_CustomizableModule_PropertiesUpdate;
+	Component_CMGame_UIModules_UIModules = Component_CMGame_UIModules_Private_UpdateModulesProperties(Component_CMGame_UIModules_UIModules, Net_LibUI3_CustomizableModule_Properties);
+}
+***
+		
+// */
+// @Component end component-cmgame-uimodules
+
+// @Component start component-loadingspinner
+// /*
+
+***MainInit***
+***
+CMGame_LoadingSpinner::MainInit(This);
+***
+
+***MainLoop***
+***
+CMGame_LoadingSpinner::MainLoop(This);
+***
+
+// */
+// @Component end component-loadingspinner
+
+// @Component start component-cmgame-player-name
+// /*
+
+***MainInit***
+***
+CMGame_PlayerName::MainInit(This);
+***
+
+***MainLoop***
+***
+CMGame_PlayerName::MainLoop(This);
+***
+		
+// */
+// @Component end component-cmgame-player-name
+
+Void InitScoreFrames(CMlFrame _Frame_Scores) {
+	if (_Frame_Scores == Null) return;
+	foreach (Index => Control in _Frame_Scores.Controls) {
+		declare Real InitialPositionY for Control = -123.;
+		InitialPositionY = Control.RelativePosition_V3.Y;
+	}
+}
+
+Void UpdateRound(CMlLabel _Label_Round, Integer _RoundNb, Integer _RoundTotal) {
+	if (_Label_Round == Null) return;
+	declare Result = ""^_RoundNb;
+	if (_RoundNb <= 0) Result = "-";
+	if (_RoundTotal > 0) Result ^= "/"^_RoundTotal;
+	_Label_Round.Value = Result;
+}
+
+Void UpdateAdditionalInfo(CMlFrame _Frame_Global, CMlLabel _Label_MapRounds, Integer _MapRoundNb, Integer _MapRoundTotal, Integer _ServerNumber) {
+	if (_Frame_Global == Null) return;
+	declare CMlFrame Frame_Toggle <=> (_Frame_Global.GetFirstChild("frame-toggle") as CMlFrame);
+	declare CMlQuad Quad_InfoBg <=> (_Frame_Global.GetFirstChild("quad-info-bg") as CMlQuad);
+	declare CMlLabel Label_InfoMapRound <=> (_Frame_Global.GetFirstChild("label-info-map-rounds") as CMlLabel);
+	declare CMlLabel Label_ServerNumber <=> (_Frame_Global.GetFirstChild("label-server-number") as CMlLabel);
+	declare AdditionalInfoCount = 0;
+	if (_MapRoundNb <= 0 && _MapRoundTotal <= 0) {
+		Quad_InfoBg.RelativePosition_V3.Y = 5.25;
+		Quad_InfoBg.Size.Y = 16.;
+		if (_Label_MapRounds != Null) _Label_MapRounds.Hide();
+		Label_InfoMapRound.Hide();
+	} else {
+		UpdateRound(_Label_MapRounds, _MapRoundNb, _MapRoundTotal);
+		if (_Label_MapRounds != Null) _Label_MapRounds.Show();
+		Label_InfoMapRound.Show();
+		AdditionalInfoCount += 1;
+	}
+	if (_ServerNumber >= 0) {
+		Label_ServerNumber.Value = TL::Compose("Match %1", ""^_ServerNumber+1);
+		Label_ServerNumber.RelativePosition_V3.Y = 15. + (5. * AdditionalInfoCount);
+		Label_ServerNumber.Show();
+		AdditionalInfoCount += 1;
+	} else {
+		Label_ServerNumber.Hide();
+	}
+	Frame_Toggle.RelativePosition_V3.Y = 20.25 + (5.*AdditionalInfoCount);
+	Quad_InfoBg.RelativePosition_V3.Y = 5.25 + (2.5*AdditionalInfoCount);
+	Quad_InfoBg.Size.Y = 16. + (5.*AdditionalInfoCount);
+}
+
+Void UpdatePlayersNb(CMlLabel _Label_Players, Integer _PlayersNb) {
+	if (_Label_Players == Null) return;
+	_Label_Players.Value = ""^_PlayersNb;
+}
+
+Void UpdateKOsNumber(CMlLabel _Label_KOs, Integer _KOsNumber, Integer _KOsMilestone) {
+	if (_Label_KOs == Null) return;
+	declare Result = ""^_KOsNumber;
+	if (_KOsNumber <= 0) {
+		Result = _("No K.O.");
+	} else if (_KOsMilestone > 1) {
+		Result = TL::Compose(_("%1 until %2 Players"), ""^_KOsNumber, ""^_KOsMilestone);
+	}
+	_Label_KOs.Value = Result;
+}
+
+Void UpdateScoreFrame(CMlFrame _Frame_Score, K_PlayerInfo _PlayerInfo, Real _PosYOffset) {
+	if (_Frame_Score == Null) return;
+	_Frame_Score.Visible = _PlayerInfo.UserInfo.AccountId != "";
+	if (!_Frame_Score.Visible) return;
+	declare Real InitialPositionY for _Frame_Score = -123.;
+	if (InitialPositionY != -123) _Frame_Score.RelativePosition_V3.Y = InitialPositionY + _PosYOffset;
+	declare CMlLabel Label_Rank <=> (_Frame_Score.GetFirstChild("label-rank") as CMlLabel);
+	declare CMlFrame PlayerName_Name <=> (_Frame_Score.GetFirstChild("playername-name") as CMlFrame);
+	declare CMlLabel Label_TimeDiff <=> (_Frame_Score.GetFirstChild("label-time-diff") as CMlLabel);
+	declare CMlQuad Quad_FocusBg <=> (_Frame_Score.GetFirstChild("quad-focus-bg") as CMlQuad);
+	declare CMlQuad Quad_Hitbox <=> (_Frame_Score.GetFirstChild("quad-player-score-hitbox") as CMlQuad);
+	declare Text KnockoutInfo_PlayerLogin for Quad_Hitbox = "";
+	KnockoutInfo_PlayerLogin = _PlayerInfo.Login;
+	declare StatusColor = C_Color_Ok;
+	switch (_PlayerInfo.Status) {
+		case C_PlayerStatus_Ok: StatusColor = C_Color_Ok;
+		case C_PlayerStatus_NearEliminated: StatusColor = C_Color_NearEliminated;
+		case C_PlayerStatus_VeryNearEliminated: StatusColor = C_Color_VeryNearEliminated;
+		case C_PlayerStatus_Eliminated: StatusColor = C_Color_Eliminated;
+	}
+	Label_Rank.Value = ""^ _PlayerInfo.CurRank;
+	CMGame_PlayerName::SetUserInfo(This, PlayerName_Name, _PlayerInfo.UserInfo);
+	declare Owner <=> MV_Utils::GetOwner(This);
+	if (Owner != Null && _PlayerInfo.UserInfo.AccountId != "" && _PlayerInfo.UserInfo.AccountId == Owner.User.WebServicesUserId) {
+		Quad_FocusBg.Show();
+	} else {
+		Quad_FocusBg.Hide();
+	}
+	Label_TimeDiff.TextColor = StatusColor;
+	if (_PlayerInfo.DNF) {
+		Label_TimeDiff.Value = "|DidNotFinish|DNF";
+		Label_TimeDiff.TextColor = C_Color_Eliminated;
+	} else if (_PlayerInfo.CurRank == 1) {
+		Label_TimeDiff.Value = TL::TimeToText(_PlayerInfo.TimeDiff, True, True);
+	} else if (_PlayerInfo.TimeDiff < 60000){
+		declare Text Text_Miliseconds = "000";
+		declare Text Text_Seconds = ""^(_PlayerInfo.TimeDiff/1000);
+		declare Integer Miliseconds = _PlayerInfo.TimeDiff%1000;
+		if (Miliseconds < 10){
+			Text_Miliseconds = "00"^Miliseconds;
+		} else if (Miliseconds < 100){
+			Text_Miliseconds = "0"^Miliseconds;
+		} else if (Miliseconds < 1000){
+			Text_Miliseconds = ""^Miliseconds;
+		}
+		Label_TimeDiff.Value = "+"^Text_Seconds^"."^Text_Miliseconds;
+	} else {
+		Label_TimeDiff.Value = "+"^TL::TimeToText(_PlayerInfo.TimeDiff, False);
+	}
+}
+
+Integer[] GetWaypointTimes(CSmScore _Score) {
+	if (_Score == Null) return [];
+	return Utils::ToScriptArray(_Score.PrevRaceTimes);
+}
+
+Integer[] GetWaypointTimes(CSmPlayer _Player) {
+	if (_Player == Null) return [];
+
+	if (_Player.RaceWaypointTimes.count > 0) {
+		return Utils::ToScriptArray(_Player.RaceWaypointTimes);
+	}
+
+	return GetWaypointTimes(_Player.Score);
+}
+
+Void UpdateLiveRanking(CMlFrame _Frame_Scores, Integer _KOsNumber) {
+	// Save current progress in the score
+	// And create ScoreId to PlayerId table
+	declare Ident[Ident] ScoreIdToPlayerId;
+	foreach (Player in Players) {
+		if (Player.Score != Null) {
+			declare Integer KnockoutInfo_LastUpdate for Player.Score = -1;
+			if ((Player.SpawnStatus != CSmPlayer::ESpawnStatus::NotSpawned) && Player.StartTime > 0) {
+				KnockoutInfo_LastUpdate = Now;
+			}
+			ScoreIdToPlayerId[Player.Score.Id] = Player.Id;
+		}
+	}
+
+	// Create ranking
+	declare Owner <=> MV_Utils::GetOwner(This);
+	declare Integer[Ident][Integer] TmpRanking;
+
+	declare Integer LatestCPTime = 0;
+
+	if (Config::HasFeature(Config::C_Feature_OldKnockoutRanking)) {
+		foreach (Score in Scores) {
+			if (Score != Null) {
+				declare netread Boolean Net_Knockout_PlayerIsAlive for Score = False;
+				if (Net_Knockout_PlayerIsAlive) {
+					declare Integer[] WaypointTimes;
+					if (
+						ScoreIdToPlayerId.existskey(Score.Id) &&
+						Players.existskey(ScoreIdToPlayerId[Score.Id])
+					) {
+						WaypointTimes = GetWaypointTimes(Players[ScoreIdToPlayerId[Score.Id]]);
+					} else { // add disconnected alive players
+						WaypointTimes = GetWaypointTimes(Score);
+					}
+
+					if (WaypointTimes.count > 0) {
+						if (!TmpRanking.existskey(WaypointTimes.count)) {
+							TmpRanking[WaypointTimes.count] = [];
+						}
+
+						declare CheckpointTime = -1;
+						CheckpointTime = WaypointTimes[WaypointTimes.count - 1];
+						TmpRanking[WaypointTimes.count][Score.Id] = CheckpointTime;
+
+						if (CheckpointTime > LatestCPTime) LatestCPTime = CheckpointTime;
+					} else {
+						if (!TmpRanking.existskey(0)) {
+							TmpRanking[0] = [];
+						}
+						TmpRanking[0][Score.Id] = -1;
+					}
+				}
+			}
+		}
+		TmpRanking = TmpRanking.sortkeyreverse();
+		foreach (CheckpointKey => CheckpointTimes in TmpRanking) {
+			TmpRanking[CheckpointKey] = CheckpointTimes.sort();
+		}
+	} else {
+		declare Integer[][Ident] ScoreIdsToSortByWaypointTimes;
+		foreach (Score in Scores) {
+			if (Score != Null) {
+				declare netread Boolean Net_Knockout_PlayerIsAlive for Score = False;
+				if (Net_Knockout_PlayerIsAlive) {
+					declare Integer[] WaypointTimes;
+					if (
+						ScoreIdToPlayerId.existskey(Score.Id) &&
+						Players.existskey(ScoreIdToPlayerId[Score.Id])
+					) {
+						WaypointTimes = GetWaypointTimes(Players[ScoreIdToPlayerId[Score.Id]]);
+					} else { // add disconnected alive players
+						WaypointTimes = GetWaypointTimes(Score);
+					}
+
+					ScoreIdsToSortByWaypointTimes[Score.Id] = WaypointTimes;
+
+					if (WaypointTimes.count > 0 && WaypointTimes[-1] > LatestCPTime) {
+						LatestCPTime = WaypointTimes[-1];
+					}
+				}
+			}
+		}
+
+		declare Ident[][Integer] ScoreIdsSortedByWaypointTimes = ScoresSort::SortIdsByWaypointTimes(ScoreIdsToSortByWaypointTimes);
+		foreach (WaypointTimesScoreIds in ScoreIdsSortedByWaypointTimes) {
+			declare Ident[][] ScoreIdsSortedByPoints;
+			if (WaypointTimesScoreIds.count <= 1) {
+				ScoreIdsSortedByPoints = [WaypointTimesScoreIds];
+			} else {
+				declare Integer[Ident] ScoreIdsToSortByPoints;
+				foreach (ScoreId in WaypointTimesScoreIds) {
+					ScoreIdsToSortByPoints[ScoreId] = Scores[ScoreId].Points;
+				}
+				ScoreIdsSortedByPoints = ScoresSort::SortIdsByPoints(ScoreIdsToSortByPoints, ScoresSort::C_Order_Descending, 0);
+			}
+			foreach (PointsScoreIds in ScoreIdsSortedByPoints) {
+				declare Ident[][] ScoreIdsSortedByName;
+				if (PointsScoreIds.count <= 1) {
+					ScoreIdsSortedByName = [PointsScoreIds];
+				} else {
+					declare Text[Ident] ScoreIdsToSortByName;
+					foreach (ScoreId in PointsScoreIds) {
+						if (Scores[ScoreId].User == Null) {
+							ScoreIdsToSortByName[ScoreId] = "";
+						} else {
+							ScoreIdsToSortByName[ScoreId] = Scores[ScoreId].User.Name;
+						}
+					}
+					ScoreIdsSortedByName = ScoresSort::SortIdsByName(ScoreIdsToSortByName, ScoresSort::C_Order_Ascending, "");
+				}
+
+				foreach (NameScoreIds in ScoreIdsSortedByName) {
+					foreach (ScoreId in NameScoreIds) {
+						declare Integer[] WaypointTimes = ScoreIdsToSortByWaypointTimes.get(ScoreId, []);
+						if (!TmpRanking.existskey(WaypointTimes.count)) {
+							TmpRanking[WaypointTimes.count] = [];
+						}
+						if (WaypointTimes.count > 0) {
+							TmpRanking[WaypointTimes.count][ScoreId] = WaypointTimes[-1];
+						} else {
+							TmpRanking[WaypointTimes.count][ScoreId] = -1;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	declare K_PlayerInfo[] Ranking;
+	declare K_PlayerInfo OwnerInfo;
+	declare Integer OwnerIndex;
+	declare Boolean IsLeader = True;
+	declare Ident LeaderId = NullId;
+	declare Integer MinTimeDiff = 0;
+	declare K_PlayerInfo[Ident] DNFPlayers;
+	foreach (CheckpointKey => CheckpointTimes in TmpRanking) {
+		foreach (ScoreId => CheckpointTime in CheckpointTimes) {
+			declare Score <=> Scores[ScoreId];
+			declare netread Boolean Net_Knockout_DNF for Score = False;
+			declare Integer KnockoutInfo_LastUpdate for Score = -1;
+			declare Integer KnockoutInfo_PrevRank for Score = 0;
+			declare Integer NewRank = Ranking.count + 1;
+			declare Integer TimeDiff = 0;
+
+			// Save the checkpoint times of the leader
+			if (IsLeader) {
+				LeaderId = ScoreId;
+				MinTimeDiff = 0;
+				if (CheckpointTime >= 0) {
+					TimeDiff = CheckpointTime;
+				}
+			}
+			// Compute the time diff
+			else {
+				declare Integer[] LeaderWaypointTimes;
+				if (LeaderId != NullId) {
+					if (
+						ScoreIdToPlayerId.existskey(LeaderId) &&
+						Players.existskey(ScoreIdToPlayerId[LeaderId])
+					) {
+						LeaderWaypointTimes = GetWaypointTimes(Players[ScoreIdToPlayerId[LeaderId]]);
+					} else if (Scores.existskey(LeaderId)) {
+						LeaderWaypointTimes = GetWaypointTimes(Scores[LeaderId]);
+					}
+				}
+
+				if (LeaderWaypointTimes.existskey(CheckpointKey - 1)) {
+					declare Integer LeaderTimeAtCheckpoint = LeaderWaypointTimes[CheckpointKey-1];
+					if (LeaderWaypointTimes.existskey(CheckpointKey)) {
+						TimeDiff = ML::Max(CheckpointTime - LeaderTimeAtCheckpoint, LatestCPTime - LeaderWaypointTimes[CheckpointKey]);
+					} else {
+						TimeDiff = CheckpointTime - LeaderTimeAtCheckpoint;
+					}
+				} else {
+					TimeDiff = 0;
+				}
+
+				if (TimeDiff > MinTimeDiff) {
+					MinTimeDiff = TimeDiff;
+				} else {
+					TimeDiff = MinTimeDiff;
+				}
+			}
+
+			// Add the player to the ranking
+			declare RankingEntry = K_PlayerInfo {
+				UserInfo = CMGame_PlayerName::GetUserInfo(Score.User, True),
+				Login = "",
+				TimeDiff = TimeDiff,
+				DNF = Net_Knockout_DNF,
+				PrevRank = KnockoutInfo_PrevRank,
+				CurRank = NewRank
+			};
+			if (!Net_Knockout_DNF) {
+				if (KnockoutInfo_LastUpdate == Now) RankingEntry.Login = Score.User.Login; // used to spectate, set only for spawned players
+				Ranking.add(RankingEntry);
+				KnockoutInfo_PrevRank = NewRank;
+				if (Owner != Null && RankingEntry.UserInfo.AccountId == Owner.User.WebServicesUserId) {
+					OwnerInfo = RankingEntry;
+					OwnerIndex = Ranking.count-1;
+				}
+			} else {
+				DNFPlayers[Score.Id] = RankingEntry;
+			}
+
+			IsLeader = False;
+		}
+	}
+
+	declare OwnerDNF = False;
+	foreach (ScoreId => RankingEntry in DNFPlayers) {
+		declare DNFEntry = RankingEntry;
+		declare NewRank = Ranking.count + 1;
+		DNFEntry.CurRank = NewRank;
+		DNFEntry.Status = C_PlayerStatus_Eliminated;
+		Ranking.add(DNFEntry);
+		declare Integer KnockoutInfo_PrevRank for Scores[ScoreId] = 0;
+		KnockoutInfo_PrevRank = NewRank;
+		if (Owner != Null && DNFEntry.UserInfo.AccountId == Owner.User.WebServicesUserId) {
+			OwnerInfo = DNFEntry;
+			OwnerIndex = Ranking.count-1;
+			OwnerDNF = True;
+		}
+	}
+	EliminationStatus::SetOwnerEliminated(UI, OwnerDNF || (OwnerInfo.CurRank > Ranking.count - _KOsNumber));
+
+	declare LastPlayersNb_ToDisplay = ML::Max(6, _KOsNumber); // @TODO @QG mettre plus de DNF affichable ?
+	declare LastKOPlayerSlotIndex = -1;
+	declare Integer[Integer] AvailableSlots = []; // slot index => player index in Ranking
+	declare AvailableSlotsNb = _Frame_Scores.Controls.count;
+	declare LastPlayerFrameIndex = -1;
+	declare PlayerFound = False;
+	for (Index, 0, AvailableSlotsNb - 1) {
+		declare ReverseIndex = AvailableSlotsNb - 1 - Index;
+		if (ReverseIndex == 0 && Ranking.count > 0) { // leader
+			if (LastPlayerFrameIndex == -1) LastPlayerFrameIndex = 0;
+			AvailableSlots[0] = 0;
+		} else if (Ranking.count-1 >= ReverseIndex) {
+			if (LastPlayerFrameIndex == -1) LastPlayerFrameIndex = ReverseIndex;
+			declare Status = C_PlayerStatus_Ok;
+			if (LastPlayerFrameIndex - ReverseIndex < _KOsNumber) Status = C_PlayerStatus_Eliminated;
+			else if (LastPlayerFrameIndex - ReverseIndex < _KOsNumber + C_PlayerStatus_VeryNearEliminatedThreshold) Status = C_PlayerStatus_VeryNearEliminated;
+			else if (LastPlayerFrameIndex - ReverseIndex < _KOsNumber + C_PlayerStatus_VeryNearEliminatedThreshold + C_PlayerStatus_NearEliminatedThreshold) Status = C_PlayerStatus_NearEliminated;
+			declare Integer RankingIndex = 0;
+			if (LastPlayersNb_ToDisplay > 0) {
+				RankingIndex = Ranking.count - 1 - LastPlayerFrameIndex + ReverseIndex;
+				LastPlayersNb_ToDisplay -= 1;
+			} else {
+				RankingIndex = ReverseIndex;
+			}
+			AvailableSlots[ReverseIndex] = RankingIndex;
+			Ranking[RankingIndex].Status = Status;
+			if (Status == C_PlayerStatus_Eliminated) LastKOPlayerSlotIndex = ReverseIndex;
+		} else {
+			AvailableSlots[ReverseIndex] = -1;
+		}
+		if (
+			Owner != Null &&
+			Ranking.existskey(AvailableSlots[ReverseIndex]) &&
+			Ranking[AvailableSlots[ReverseIndex]].UserInfo.AccountId == Owner.User.WebServicesUserId
+		) {
+			PlayerFound = True;
+		}
+	}
+
+	if (!PlayerFound && OwnerInfo.UserInfo.AccountId != "") {
+		for (Index, 0, AvailableSlots.count - 1) {
+			if (
+				!PlayerFound &&
+				AvailableSlots.existskey(Index) &&
+				Ranking.existskey(AvailableSlots[Index]) &&
+				(Ranking[AvailableSlots[Index]].CurRank >= OwnerInfo.CurRank ||
+				(Ranking[AvailableSlots[Index]].DNF && OwnerInfo.DNF))
+			) {
+				PlayerFound = True;
+				AvailableSlots[Index] = OwnerIndex;
+			}
+		}
+	}
+
+	foreach (Index => Control in _Frame_Scores.Controls) {
+		declare RankingIndex = AvailableSlots[Index];
+		declare PosYOffset = 0.;
+		if (
+			Index >= LastKOPlayerSlotIndex &&
+			LastKOPlayerSlotIndex > 0
+		) {
+			PosYOffset = -2.;
+		}
+		if (Ranking.existskey(RankingIndex)) {
+			UpdateScoreFrame((Control as CMlFrame), Ranking[RankingIndex], PosYOffset);
+		} else {
+			UpdateScoreFrame((Control as CMlFrame), K_PlayerInfo {}, PosYOffset);
+		}
+	}
+
+	declare CMlFrame Frame_Separator <=> (Page.GetFirstChild("frame-separator") as CMlFrame);
+	Frame_Separator.RelativePosition_V3.Y = (LastKOPlayerSlotIndex) * -5.5*1.;
+	Frame_Separator.Visible = (LastKOPlayerSlotIndex > 0);
+}
+
+Void DisplayLiveRanking(CMlFrame _Frame_Content, Boolean _LiveRankingVisibleTarget) {
+	declare CMlFrame Frame_LiveRanking <=> (_Frame_Content.GetFirstChild("frame-live-ranking") as CMlFrame);
+	declare CMlQuad Quad_Toggle <=> (_Frame_Content.GetFirstChild("quad-toggle") as CMlQuad);
+	if (_LiveRankingVisibleTarget) {
+		Quad_Toggle.ChangeImageUrl("file://Media/Manialinks/Nadeo/CMGame/Utils/Icons/128x128/ICON_ARROW_LEFT_OBLIQUE.dds");
+	} else {
+		Quad_Toggle.ChangeImageUrl("file://Media/Manialinks/Nadeo/CMGame/Utils/Icons/128x128/ICON_ARROW_RIGHT_OBLIQUE.dds");
+	}
+	declare HiddenPosX = -52.5;
+	declare VisiblePosX = 1.;
+	declare StartPos = _Frame_Content.RelativePosition_V3;
+	declare EndPosX = VisiblePosX;
+	if (!_LiveRankingVisibleTarget) EndPosX = HiddenPosX;
+	AnimMgr.Flush(_Frame_Content);
+	AnimMgr.Flush(Frame_LiveRanking);
+	Frame_LiveRanking.Show();
+	if (!_LiveRankingVisibleTarget) {
+		AnimMgr.Add(Frame_LiveRanking, "<frame hidden=\""^1^"\" />", Now, 250, CAnimManager::EAnimManagerEasing::Linear);
+	}
+	AnimMgr.Add(_Frame_Content, "<frame pos=\"" ^EndPosX^" "^StartPos.Y^ "\" />", Now, 250, CAnimManager::EAnimManagerEasing::Linear);
+}
+
+***MainInit***
+***
+declare CMlFrame Frame_Global;
+declare CMlFrame Frame_Content;
+declare CMlFrame Frame_Scores;
+declare CMlLabel Label_MapRounds;
+declare CMlLabel Label_Round;
+declare CMlLabel Label_Players;
+declare CMlLabel Label_KOs;
+
+declare netread Integer Net_Knockout_KnockoutInfo_MapRoundNb for Teams[0] = 0;
+declare netread Integer Net_Knockout_KnockoutInfo_MapRoundTotal for Teams[0] = 0;
+declare netread Integer Net_Knockout_KnockoutInfo_RoundNb for Teams[0] = 0;
+declare netread Integer Net_Knockout_KnockoutInfo_RoundTotal for Teams[0] = 0;
+declare netread Integer Net_Knockout_KnockoutInfo_PlayersNb for Teams[0] = 0;
+declare netread Integer Net_Knockout_KnockoutInfo_KOsNumber for Teams[0] = 0;
+declare netread Integer Net_Knockout_KnockoutInfo_KOsMilestone for Teams[0] = 0;
+declare netread Integer Net_Knockout_KnockoutInfo_RankingUpdate for Teams[0] = 0;
+declare netread Integer Net_Knockout_KnockoutInfo_ServerNumber for Teams[0] = -1;
+
+declare Boolean DisplayModule;
+declare Boolean ContentVisible;
+declare Integer RankingUpdate;
+declare Integer AutoRankingUpdate;
+declare Integer MapRoundNb;
+declare Integer MapRoundTotal;
+declare Integer RoundNb;
+declare Integer RoundTotal;
+declare Integer PlayersNb;
+declare Integer KOsNumber;
+declare Integer KOsMilestone;
+declare Integer CPCount;
+***
+
+***MainStart***
+***
+Frame_Global <=> (Page.GetFirstChild("frame-global") as CMlFrame);
+Frame_Content <=> (Page.GetFirstChild("frame-content") as CMlFrame);
+Frame_Scores <=> (Page.GetFirstChild("frame-scores") as CMlFrame);
+Label_MapRounds <=> (Page.GetFirstChild("label-map-rounds") as CMlLabel);
+Label_Round <=> (Page.GetFirstChild("label-round") as CMlLabel);
+Label_Players <=> (Page.GetFirstChild("label-players") as CMlLabel);
+Label_KOs <=> (Page.GetFirstChild("label-KOs") as CMlLabel);
+
+DisplayModule = Frame_Global.Visible;
+ContentVisible = Frame_Content.Visible;
+MapRoundNb = Net_Knockout_KnockoutInfo_RoundNb;
+MapRoundTotal = Net_Knockout_KnockoutInfo_RoundTotal;
+RoundNb = Net_Knockout_KnockoutInfo_RoundNb;
+RoundTotal = Net_Knockout_KnockoutInfo_RoundTotal;
+PlayersNb = Net_Knockout_KnockoutInfo_PlayersNb;
+KOsNumber = Net_Knockout_KnockoutInfo_KOsNumber;
+KOsMilestone = Net_Knockout_KnockoutInfo_KOsMilestone;
+CPCount = -1;
+RankingUpdate = -123;
+if (C_Frequency_AutoRankingUpdate > 0) {
+	AutoRankingUpdate = Now + C_Frequency_AutoRankingUpdate;
+} else {
+	AutoRankingUpdate = -123;
+}
+InitScoreFrames(Frame_Scores);
+UpdateAdditionalInfo(Frame_Global, Label_MapRounds, MapRoundNb, MapRoundTotal, Net_Knockout_KnockoutInfo_ServerNumber);
+UpdateRound(Label_Round, RoundNb, RoundTotal);
+UpdateKOsNumber(Label_KOs, KOsNumber, KOsMilestone);
+UpdatePlayersNb(Label_Players, PlayersNb);
+
+// Must move this UI to respect safe area on Playstation (see /trackmania-next/tmnext/-/issues/5400)
+if (Platform::IsSony(System)) {
+	Frame_Global.RelativePosition_V3.X = Frame_Global.RelativePosition_V3.X + 9.;
+}
+***
+
+***MainLoop***
+***
+if (PageIsVisible) {
+	declare Owner <=> MV_Utils::GetOwner(This);
+	if (Owner != Null) {
+		declare netread Boolean Net_Knockout_KnockoutInfo_IsVisible for Owner;
+		if (DisplayModule != Net_Knockout_KnockoutInfo_IsVisible) {
+			DisplayModule = Net_Knockout_KnockoutInfo_IsVisible;
+			Frame_Global.Visible = Net_Knockout_KnockoutInfo_IsVisible;
+		}
+	}
+
+	foreach(Event in PendingEvents) {
+		switch (Event.Type) {
+			case CMlScriptEvent::Type::MouseClick: {
+				if (Event.Control.ControlId == "quad-toggle") {
+					ContentVisible = !ContentVisible;
+					DisplayLiveRanking(Frame_Content, ContentVisible);
+				} else if (Event.Control.ControlId == "quad-player-score-hitbox") {
+					declare Text KnockoutInfo_PlayerLogin for Event.Control = "";
+					if (KnockoutInfo_PlayerLogin != "") {
+						ClientUI.Spectator_SetForcedTarget_Clear();
+						SetSpectateTarget(KnockoutInfo_PlayerLogin);
+					}
+				}
+			}
+		}
+	}
+
+	if (
+		MapRoundNb != Net_Knockout_KnockoutInfo_MapRoundNb ||
+		MapRoundTotal != Net_Knockout_KnockoutInfo_MapRoundTotal
+	) {
+		MapRoundNb = Net_Knockout_KnockoutInfo_MapRoundNb;
+		MapRoundTotal = Net_Knockout_KnockoutInfo_MapRoundTotal;
+		UpdateAdditionalInfo(Frame_Global, Label_MapRounds, MapRoundNb, MapRoundTotal, Net_Knockout_KnockoutInfo_ServerNumber);
+	}
+
+	if (
+		RoundNb != Net_Knockout_KnockoutInfo_RoundNb ||
+		RoundTotal != Net_Knockout_KnockoutInfo_RoundTotal
+	) {
+		RoundNb = Net_Knockout_KnockoutInfo_RoundNb;
+		RoundTotal = Net_Knockout_KnockoutInfo_RoundTotal;
+		UpdateRound(Label_Round, RoundNb, RoundTotal);
+	}
+
+	if (
+		KOsNumber != Net_Knockout_KnockoutInfo_KOsNumber ||
+		KOsMilestone != Net_Knockout_KnockoutInfo_KOsMilestone
+	) {
+		KOsNumber = Net_Knockout_KnockoutInfo_KOsNumber;
+		KOsMilestone = Net_Knockout_KnockoutInfo_KOsMilestone;
+		UpdateKOsNumber(Label_KOs, KOsNumber, KOsMilestone);
+	}
+
+	if (PlayersNb != Net_Knockout_KnockoutInfo_PlayersNb) {
+		PlayersNb = Net_Knockout_KnockoutInfo_PlayersNb;
+		UpdatePlayersNb(Label_Players, PlayersNb);
+	}
+
+	if (
+		RankingUpdate != Net_Knockout_KnockoutInfo_RankingUpdate ||
+		(AutoRankingUpdate > 0 && AutoRankingUpdate <= Now) ||
+		(InputPlayer != Null && CPCount != InputPlayer.RaceWaypointTimes.count)
+	) {
+		if (InputPlayer != Null) CPCount = InputPlayer.RaceWaypointTimes.count;
+		RankingUpdate = Net_Knockout_KnockoutInfo_RankingUpdate;
+		if (AutoRankingUpdate > 0) AutoRankingUpdate = Now + C_Frequency_AutoRankingUpdate;
+		UpdateLiveRanking(Frame_Scores, KOsNumber);
+	}
+
+	if (Owner == Null && DisplayModule) {
+		DisplayModule = False;
+		Frame_Global.Visible = DisplayModule;
+	}
+}
+***
+
+
+Void ManiaView_DoNothing() {}
+
+main() {
+	+++MainInit+++
+	+++MainStart+++
+	while (True) {
+		yield;
+		+++MainLoop+++
+	}
+	+++MainEnd+++
+}
+--></script>
+</manialink>

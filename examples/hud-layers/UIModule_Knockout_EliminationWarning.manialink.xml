@@ -1,0 +1,386 @@
+
+<manialink name="UIModule_Knockout_EliminationWarning" version="3">
+
+<!-- @Component start component-cmgame-uimodules -->
+<framemodel id="component-cmgame-uimodules">
+		</framemodel>
+<!-- @Component end component-cmgame-uimodules -->
+
+<!-- @Component start royal-ranking -->
+<framemodel id="royal-ranking"></framemodel>
+<!-- @Component end royal-ranking -->
+
+<frame z-index="-50" hidden="1" id="frame-global">
+	<frame  id="Knockout_EliminationWarning" class="component-cmgame-uimodules-module" pos="0. 0." scale="1." hidden="0" data-customizable-module-enabled="0" >
+		<frame id="frame-content" hidden="1" z-index="0">
+			<quad id="quad-top-bar" fullscreen="1" pos="0 91.5" size="380 10" halign="center" valign="top" image="file://Media/Manialinks/Nadeo/Trackmania/Modes/Knockout/hud_knockout_warning_top.dds" colorize="FF0D0D"/>
+			<quad id="quad-bot-left-bar" fullscreen="1" size="161 5.5" pos="-21 -91" halign="right" valign="bottom" image="file://Media/Manialinks/Nadeo/Trackmania/Modes/Knockout/hud_knockout_warning_bottom_left.dds" colorize="FF0D0D"/>
+			<quad id="quad-bot-right-bar" fullscreen="1" size="161 5.5" pos="21 -91" halign="left" valign="bottom" image="file://Media/Manialinks/Nadeo/Trackmania/Modes/Knockout/hud_knockout_warning_bottom_right.dds" colorize="FF0D0D"/>
+			<quad id="quad-warning-left" fullscreen="1" pos="-25 -81" size="11. 9.625" halign="center" valign="center" image="file://Media/Manialinks/Nadeo/Trackmania/Modes/Knockout/hud_knockout_warning_timer_left.dds" colorize="FF0D0D"/>
+			<quad id="quad-warning-right" fullscreen="1" pos="25 -81" size="11. 9.625" halign="center" valign="center" image="file://Media/Manialinks/Nadeo/Trackmania/Modes/Knockout/hud_knockout_warning_timer_right.dds" colorize="FF0D0D"/>
+		</frame>
+	</frame>
+</frame>
+
+<script><!--
+
+// @Component start component-cmgame-uimodules
+// /*
+
+#Include "Libs/Nadeo/CMGame/Utils/Tools.Script.txt" as Component_CMGame_UIModules_Tools
+#Include "Libs/Nadeo/CMGame/Modes/UIModules_Common.Script.txt" as Component_CMGame_UIModules_UIModules_Common
+
+#Struct Component_CMGame_UIModules_K_Module {
+	CMlControl Control;
+	Boolean IsCustom;
+	Component_CMGame_UIModules_UIModules_Common::K_ModuleProperties DefaultProperties;
+}
+		
+// */
+// @Component end component-cmgame-uimodules
+
+// @Component start royal-ranking
+// /*
+
+#Struct RoyalRanking_K_TeamRank {
+	Integer TeamId;
+	Integer Rank;
+	Integer Points;
+	Integer Time;
+	Integer TimeDiff;
+	Boolean Eliminated;
+	Integer Stars;
+	Integer Progression;
+}
+
+#Const RoyalRanking_C_TeamRankNull RoyalRanking_K_TeamRank {
+	TeamId = -1,
+	Rank = -1,
+	Points = 0,
+	Time = -1,
+	TimeDiff = 0,
+	Eliminated = False,
+	Stars = 0,
+	Progression = 0
+}
+
+// */
+// @Component end royal-ranking
+
+#Include "MathLib" as ML
+#Include "Libs/Nadeo/CMGame/Utils/AudioManager_ML.Script.txt" as AudioManager
+#Include "Libs/Nadeo/TMGame/Modes/MV_Utils.Script.txt" as MV_Utils
+#Include "Libs/Nadeo/Trackmania/Modes/Knockout/Components/EliminationStatus.Script.txt" as EliminationStatus
+
+#Const C_AnimDelay 100
+#Const C_AnimDuration 3000
+#Const C_AlertSound "KnockoutEliminationAlert"
+
+#Const C_GameMode_Knockout 1
+#Const C_GameMode_Royal 2
+
+#Struct K_State {
+	Integer AnimStartTime;
+	Boolean AnimStarted;
+	Boolean EliminationSoundPlayed;
+}
+
+
+
+// @Component start component-cmgame-uimodules
+// /*
+
+Component_CMGame_UIModules_K_Module[Text] Component_CMGame_UIModules_Private_UpdateModulesProperties(Component_CMGame_UIModules_K_Module[Text] _UIModules, Component_CMGame_UIModules_UIModules_Common::K_ModuleProperties[Text] _ModulesProperties) {
+	declare Component_CMGame_UIModules_K_Module[Text] UIModules = _UIModules;
+	foreach (ModuleId => Module in _UIModules) {
+		// Module properties are customized
+		if (_ModulesProperties.existskey(ModuleId)) {
+			declare Component_CMGame_UIModules_UIModules_Common::K_ModuleProperties ModuleProperties = _ModulesProperties[ModuleId];
+			Module.Control.RelativePosition_V3 = ModuleProperties.Position;
+			Module.Control.RelativeScale = ModuleProperties.Scale;
+			Module.Control.Visible = ModuleProperties.Visible;
+			UIModules[ModuleId].IsCustom = True;
+		}
+		// Module properties are not customized anymore
+		else if (Module.IsCustom) {
+			Module.Control.RelativePosition_V3 = Module.DefaultProperties.Position;
+			Module.Control.RelativeScale = Module.DefaultProperties.Scale;
+			Module.Control.Visible = Module.DefaultProperties.Visible;
+			UIModules[ModuleId].IsCustom = False;
+		}
+	}
+	return UIModules;
+}
+
+Component_CMGame_UIModules_K_Module[Text] Component_CMGame_UIModules_Private_Initialize() {
+	// Find UI modules controls
+	declare Component_CMGame_UIModules_K_Module[Text] Component_CMGame_UIModules_UIModules;
+	Page.GetClassChildren("component-cmgame-uimodules-module", Page.MainFrame, True);
+	foreach (Control in Page.GetClassChildren_Result) {
+		declare TrueControlHandle = Control;
+		assert(TrueControlHandle.ControlId != "", "[UIModules] A UI module CMlControl must have an id");
+		assert(!Component_CMGame_UIModules_UIModules.existskey(TrueControlHandle.ControlId), "[UIModules] Two UI modules CMlControl cannot share the same id '"^TrueControlHandle.ControlId^"'");
+		if (
+			TrueControlHandle.DataAttributeExists("customizable-module-enabled") &&
+			Component_CMGame_UIModules_Tools::TextToBoolean(TrueControlHandle.DataAttributeGet("customizable-module-enabled"))
+		) {
+			Component_CMGame_UIModules_UIModules[TrueControlHandle.ControlId] = Component_CMGame_UIModules_K_Module {
+				Control = TrueControlHandle,
+				IsCustom = False,
+				DefaultProperties = Component_CMGame_UIModules_UIModules_Common::K_ModuleProperties {
+					Position = TrueControlHandle.RelativePosition_V3,
+					Scale = TrueControlHandle.RelativeScale,
+					Visible = TrueControlHandle.Visible
+				}
+			};
+		}
+	}
+	return Component_CMGame_UIModules_UIModules;
+}
+
+***MainInit***
+***
+declare netread Component_CMGame_UIModules_UIModules_Common::K_ModuleProperties[Text] Net_LibUI3_CustomizableModule_Properties for Teams[0];
+declare netread Integer Net_LibUI3_CustomizableModule_PropertiesUpdate for Teams[0];
+
+declare Component_CMGame_UIModules_K_Module[Text] Component_CMGame_UIModules_UIModules;
+***
+
+***MainStart***
+***
+declare Integer ModulesPropertiesUpdate = Net_LibUI3_CustomizableModule_PropertiesUpdate;
+
+Component_CMGame_UIModules_UIModules = Component_CMGame_UIModules_Private_Initialize();
+Component_CMGame_UIModules_UIModules = Component_CMGame_UIModules_Private_UpdateModulesProperties(Component_CMGame_UIModules_UIModules, Net_LibUI3_CustomizableModule_Properties);
+***
+
+***MainLoop***
+***
+if (ModulesPropertiesUpdate != Net_LibUI3_CustomizableModule_PropertiesUpdate) {
+	ModulesPropertiesUpdate = Net_LibUI3_CustomizableModule_PropertiesUpdate;
+	Component_CMGame_UIModules_UIModules = Component_CMGame_UIModules_Private_UpdateModulesProperties(Component_CMGame_UIModules_UIModules, Net_LibUI3_CustomizableModule_Properties);
+}
+***
+		
+// */
+// @Component end component-cmgame-uimodules
+
+// @Component start royal-ranking
+// /*
+
+Integer RoyalRanking_GetTeamsRankingUpdate() {
+	declare netread Integer Net_Royal_Ranking_TeamsRankingUpdate for Teams[0];
+	return Net_Royal_Ranking_TeamsRankingUpdate;
+}
+
+Integer[][] RoyalRanking_GetTeamsRanking() {
+	declare netread Integer[][] Net_Royal_Ranking_TeamsRanking for Teams[0];
+	return Net_Royal_Ranking_TeamsRanking;
+}
+
+RoyalRanking_K_TeamRank RoyalRanking_GetTeamRank(Integer[] _TeamRank, Integer _Rank) {
+	declare RoyalRanking_K_TeamRank TeamRank = RoyalRanking_C_TeamRankNull;
+
+	if (_TeamRank.count >= 1) TeamRank.TeamId = _TeamRank[0];
+	if (_TeamRank.count >= 2) TeamRank.Points = _TeamRank[1];
+	if (_TeamRank.count >= 3) TeamRank.Time = _TeamRank[2];
+	if (_TeamRank.count >= 4) TeamRank.TimeDiff = _TeamRank[3];
+	if (_TeamRank.count >= 5) TeamRank.Eliminated = _TeamRank[4] > 0;
+	if (_TeamRank.count >= 6) TeamRank.Stars = _TeamRank[5];
+	if (_TeamRank.count >= 7) TeamRank.Progression = _TeamRank[6];
+	TeamRank.Rank = _Rank;
+
+	return TeamRank;
+}
+
+Integer RoyalRanking_GetTeamRank(Integer _TeamId) {
+	declare netread Integer[][] Net_Royal_Ranking_TeamsRanking for Teams[0];
+	declare Integer Rank = 1;
+	foreach (TeamRanking in Net_Royal_Ranking_TeamsRanking) {
+		if (TeamRanking.count >= 1 && TeamRanking[0] == _TeamId) break;
+		Rank += 1;
+	}
+	return Rank;
+}
+
+Boolean RoyalRanking_IsTeamIdRank(Integer _TeamId, Integer[] _TeamRank) {
+	return (_TeamRank.count >= 1 && _TeamRank[0] == _TeamId);
+}
+
+Integer RoyalRanking_GetScoreClan(CSmScore _Score) {
+	if (_Score == Null) return 0;
+	declare netread Integer Net_Royal_Ranking_Clan for _Score;
+	return Net_Royal_Ranking_Clan;
+}
+
+Integer RoyalRanking_GetPlayerSegmentsNb(CSmScore _Score) {
+	if (_Score == Null) return 0;
+	declare netread Integer Net_Royal_Ranking_SegmentsNb for _Score;
+	return Net_Royal_Ranking_SegmentsNb;
+}
+
+Integer RoyalRanking_GetPlayerSegmentsPoints(CSmScore _Score) {
+	if (_Score == Null) return 0;
+	declare netread Integer Net_Royal_Ranking_SegmentsPoints for _Score = 0;
+	return Net_Royal_Ranking_SegmentsPoints;
+}
+
+Integer RoyalRanking_GetPlayerRecordsPoints(CSmScore _Score) {
+	if (_Score == Null) return 0;
+	declare netread Integer Net_Royal_Ranking_RecordsPoints for _Score = 0;
+	return Net_Royal_Ranking_RecordsPoints;
+}
+
+Integer RoyalRanking_GetPlayerPoints(CSmScore _Score) {
+	return RoyalRanking_GetPlayerSegmentsPoints(_Score) + RoyalRanking_GetPlayerRecordsPoints(_Score);
+}
+
+// */
+// @Component end royal-ranking
+
+K_State DisplayWarning(K_State _State, CMlFrame _Frame_Content, Boolean _IsVisible) {
+	declare K_State State = _State;
+
+	_Frame_Content.Visible = _IsVisible;
+	State.AnimStarted = _IsVisible;
+	AudioManager::StopSound(This, C_AlertSound);
+
+	if (_IsVisible && !State.EliminationSoundPlayed) {
+		State.EliminationSoundPlayed = True;
+		AudioManager::PlaySound(This, C_AlertSound);
+	} else if (!_IsVisible) {
+		State.AnimStartTime = -1;
+		State.EliminationSoundPlayed = False;
+	}
+
+	return State;
+}
+
+***MainInit***
+***
+declare CMlFrame Frame_Global;
+declare CMlFrame Frame_Content;
+declare CMlQuad Quad_TopBar;
+declare CMlQuad Quad_BotLeftBar;
+declare CMlQuad Quad_BotRightBar;
+declare CMlQuad Quad_WarningLeft;
+declare CMlQuad Quad_WarningRight;
+
+declare K_State State;
+declare Boolean DisplayModule;
+declare Integer CPCount;
+declare Text OwnerAccountId;
+declare Integer DisplayWarning;
+***
+
+***MainStart***
+***
+Frame_Global <=> (Page.GetFirstChild("frame-global") as CMlFrame);
+Frame_Content <=> (Page.GetFirstChild("frame-content") as CMlFrame);
+Quad_TopBar <=> (Page.GetFirstChild("quad-top-bar") as CMlQuad);
+Quad_BotLeftBar <=> (Page.GetFirstChild("quad-bot-left-bar") as CMlQuad);
+Quad_BotRightBar <=> (Page.GetFirstChild("quad-bot-right-bar") as CMlQuad);
+Quad_WarningLeft <=> (Page.GetFirstChild("quad-warning-left") as CMlQuad);
+Quad_WarningRight <=> (Page.GetFirstChild("quad-warning-right") as CMlQuad);
+
+State = K_State {
+	AnimStartTime = -1,
+	AnimStarted = False,
+	EliminationSoundPlayed = False
+};
+
+DisplayModule = Frame_Global.Visible;
+CPCount = 0;
+OwnerAccountId = "";
+DisplayWarning = -1;
+***
+
+***MainLoop***
+***
+if (PageIsVisible) {
+	declare Owner <=> MV_Utils::GetOwner(This);
+	if (Owner != Null) {
+		declare netread Boolean Net_Knockout_EliminationWarning_IsVisible for Owner;
+		if (DisplayModule != Net_Knockout_EliminationWarning_IsVisible) {
+			DisplayModule = Net_Knockout_EliminationWarning_IsVisible;
+			Frame_Global.Visible = Net_Knockout_EliminationWarning_IsVisible;
+		}
+
+		if (OwnerAccountId != Owner.User.WebServicesUserId) {
+			declare netread Integer Net_EliminationWarning_DisplayWarning for Owner;
+			DisplayWarning = Net_EliminationWarning_DisplayWarning;
+			OwnerAccountId = Owner.User.WebServicesUserId;
+			CPCount = Owner.RaceWaypointTimes.count;
+			State = DisplayWarning(State, Frame_Content, False);
+		}
+
+		declare netread Integer Net_Knockout_EliminationWarning_GameMode for Teams[0];
+		switch (Net_Knockout_EliminationWarning_GameMode) {
+			case C_GameMode_Knockout: {
+				if (CPCount != Owner.RaceWaypointTimes.count) {
+					CPCount = Owner.RaceWaypointTimes.count;
+					if (CPCount != 0) {
+						if (State.AnimStartTime <= 0) {
+							State.AnimStartTime = Now + C_AnimDelay;
+							State.AnimStarted = False;
+						}
+					} else {
+						State = DisplayWarning(State, Frame_Content, False);
+					}
+				}
+			}
+			case C_GameMode_Royal: {
+				// Hide left and right warning for specs
+				declare Boolean IsSpec = InputPlayer != Null && InputPlayer.SpawnStatus == CSmPlayer::ESpawnStatus::NotSpawned;
+				Quad_WarningLeft.Visible = !IsSpec;
+				Quad_WarningRight.Visible = !IsSpec;
+
+				declare netread Integer Net_EliminationWarning_DisplayWarning for Owner;
+				if (DisplayWarning != Net_EliminationWarning_DisplayWarning) {
+					DisplayWarning = Net_EliminationWarning_DisplayWarning;
+					if (State.AnimStartTime <= 0) {
+						State.AnimStartTime = Now + C_AnimDelay;
+						State.AnimStarted = False;
+					}
+				}
+			}
+		}
+	}
+
+	/* Warning animation */
+	if (State.AnimStartTime > 0 && State.AnimStartTime <= Now) {
+		if (State.AnimStartTime + C_AnimDuration <= Now || !EliminationStatus::IsOwnerEliminated(UI)) {
+			State = DisplayWarning(State, Frame_Content, False);
+			State.EliminationSoundPlayed = EliminationStatus::IsOwnerEliminated(UI);
+		} else {
+			if (!State.AnimStarted) State = DisplayWarning(State, Frame_Content, True);
+			declare Real Opacity = (ML::Cos(( (Now-State.AnimStartTime)/1000.*2.*ML::PI() - ML::PI())) * 0.5) + 0.5;
+			Quad_TopBar.Opacity = Opacity;
+			Quad_BotLeftBar.Opacity = Opacity;
+			Quad_BotRightBar.Opacity = Opacity;
+			Quad_WarningLeft.Opacity = Opacity;
+			Quad_WarningRight.Opacity = Opacity;
+		}
+	}
+
+	if (Owner == Null && DisplayModule) {
+		DisplayModule = False;
+		Frame_Global.Visible = DisplayModule;
+	}
+}
+***
+
+
+Void ManiaView_DoNothing() {}
+
+main() {
+	+++MainInit+++
+	+++MainStart+++
+	while (True) {
+		yield;
+		+++MainLoop+++
+	}
+	+++MainEnd+++
+}
+--></script>
+</manialink>
