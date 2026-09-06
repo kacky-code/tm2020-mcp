@@ -39,3 +39,13 @@ Regenerate with `./refresh.sh`. Nothing here is ours - do not edit, just read.
 | [ObstacleSM/Titlepack](https://github.com/ObstacleSM/Titlepack) | `722897a` | 2025-10-05 |
 | [escapemania/escapemania](https://github.com/escapemania/escapemania) | `3b34ebb` | 2025-05-08 |
 | [tmservers/tm-server-manager](https://github.com/tmservers/tm-server-manager) | `99c115b` | 2026-07-17 |
+
+## What has been read out of here
+
+The mirror is large and mostly unread. When a repo here settles a question, record the
+answer under `docs/` with file and line pointers, rather than leaving it to be
+rediscovered from 3,400 lines a year later.
+
+| doc | read out of | covers |
+|---|---|---|
+| [../docs/maniascript-mode-ui.md](../docs/maniascript-mode-ui.md) | `Revive-KO`, `game-modes` | Driving a mode's own UI layers: layer lifecycle, list transport, per-entity state, animation, fixed-slot caps. |
