@@ -726,6 +726,12 @@ not a full mirror of the Openplanet docs.
 block grid: what a block `direction` means in world coordinates, where ground level is, and
 which claims came from parsing 450 real maps with GBX.NET rather than from the editor API.
 
+[`docs/maniascript-mode-ui.md`](docs/maniascript-mode-ui.md) covers the other side of the same
+problem: how a server-side game mode drives its own ManiaLink layers. Layer lifecycle, getting a
+list into a page, per-entity state, animation, and the in-game variable inspector. Read out of
+the shipped modes mirrored in `refs/`, with file and line pointers, so the mirror gets read
+instead of re-derived — `refs/MANIFEST.md` tracks what has been mined from where.
+
 ## Notes
 
 - Keep the plugin in the user-local `OpenplanetNext/Plugins` folder. The game-install `Openplanet/Plugins` folder may reject local source plugins with signature errors.
