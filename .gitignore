@@ -35,3 +35,7 @@ refs/*
 !refs/MANIFEST.md
 !refs/refresh.sh
 !refs/README.md
+
+# Runtime logs. Openplanet writes Openplanet.log next to the game and it records local
+# paths, the Nadeo account id and hardware identifiers, so it must never be committed.
+*.log
